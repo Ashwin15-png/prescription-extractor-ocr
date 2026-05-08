@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+pytesseract
+opencv-python
+pillow
+python-multipart
+streamlit
+requests
+psycopg2-binary
+python-dotenv

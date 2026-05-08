@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extract Prescription - AI Powered</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header-flex">
+            <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Home</a>
+            <h2>New Prescription Extraction</h2>
+        </div>
+
+        <div id="uploadZone" class="upload-section">
+            <i class="fa-solid fa-file-prescription"></i>
+            <p>Click to select or drag and drop prescription image</p>
+            <input type="file" id="imageInput" accept="image/*" class="hidden">
+            <button class="btn" onclick="document.getElementById('imageInput').click()" style="margin-top: 15px;">
+                Select Image
+            </button>
+        </div>
+
+        <div id="loading" class="hidden" style="text-align: center; margin: 40px 0;">
+            <span class="loader"></span>
+            <p style="margin-top: 15px; color: var(--text-muted);">Analyzing prescription with AI...</p>
+        </div>
+
+        <div id="resultSection" class="hidden">
+            <div class="result-grid">
+                <div class="card">
+                    <h3>Raw Extracted Text</h3>
+                    <textarea id="rawText" readonly></textarea>
+                </div>
+                
+                <div class="card">
+                    <h3>Structured Fields</h3>
+                    <div class="field-group">
+                        <label>Patient Name</label>
+                        <input type="text" id="patientName" class="editable-field">
+                    </div>
+                    <div class="field-group">
+                        <label>Date</label>
+                        <input type="text" id="date" class="editable-field">
+                    </div>
+                    <div class="field-group">
+                        <label>Medicine / Drug</label>
+                        <input type="text" id="medicine" class="editable-field">
+                    </div>
+                    <div class="field-group">
+                        <label>Dosage Instructions</label>
+                        <input type="text" id="dosage" class="editable-field">
+                    </div>
+                    
+                    <button id="saveBtn" class="btn btn-success">
+                        <i class="fa-solid fa-floppy-disk"></i> Save to Database
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="js/app.js"></script>
+</body>
+</html>

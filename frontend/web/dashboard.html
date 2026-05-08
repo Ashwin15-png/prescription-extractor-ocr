@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Prescriptions</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container" style="max-width: 1200px;">
+        <div class="header-flex">
+            <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Home</a>
+            <h2>Database Records</h2>
+            <button id="fetchRecordsBtn" class="btn">
+                <i class="fa-solid fa-rotate"></i> Refresh
+            </button>
+        </div>
+        
+        <div class="table-responsive">
+            <table id="recordsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Patient Name</th>
+                        <th>Date</th>
+                        <th>Medicine</th>
+                        <th>Dosage</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsBody">
+                    <!-- Records will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script src="js/app.js"></script>
+</body>
+</html>
