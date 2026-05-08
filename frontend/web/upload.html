@@ -3,64 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Extract Prescription - AI Powered</title>
+    <title>Upload Prescription | PrescriptionX</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header-flex">
-            <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Home</a>
-            <h2>New Prescription Extraction</h2>
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <nav>
+        <div class="container nav-content">
+            <a href="index.html" class="logo">
+                <i class="fa-solid fa-file-medical"></i>
+                <span>PrescriptionX</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="dashboard.html" class="nav-link">Records</a>
+                <a href="upload.html" class="btn btn-primary">Start Extracting</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container fade-in" style="padding: 40px 0;">
+        <div class="header-flex" style="margin-bottom: 32px;">
+            <a href="index.html" class="btn btn-ghost" style="padding-left: 0;">
+                <i class="fa-solid fa-arrow-left"></i> Back to Home
+            </a>
+            <h2 style="font-size: 1.8rem;">New Prescription Extraction</h2>
         </div>
 
-        <div id="uploadZone" class="upload-section">
-            <i class="fa-solid fa-file-prescription"></i>
-            <p>Click to select or drag and drop prescription image</p>
-            <input type="file" id="imageInput" accept="image/*" class="hidden">
-            <button class="btn" onclick="document.getElementById('imageInput').click()" style="margin-top: 15px;">
-                Select Image
-            </button>
+        <!-- Upload Step -->
+        <div id="uploadStep" class="upload-container">
+            <div id="dropZone" class="drop-zone glass-card">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <h3>Upload Prescription</h3>
+                <p>Drag and drop your image here or click to browse</p>
+                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                <button class="btn btn-primary" onclick="document.getElementById('imageInput').click()" style="margin-top: 24px;">
+                    Select File
+                </button>
+            </div>
+            
+            <div id="filePreview" class="file-preview glass-card hidden">
+                <img id="previewImg" src="" alt="Preview">
+                <div style="flex: 1;">
+                    <p id="fileName" style="font-weight: 600; margin-bottom: 4px;">prescription.jpg</p>
+                    <p id="fileSize" style="color: var(--text-muted); font-size: 0.875rem;">1.2 MB</p>
+                </div>
+                <button class="btn btn-ghost" id="removeFile"><i class="fa-solid fa-xmark"></i></button>
+            </div>
         </div>
 
-        <div id="loading" class="hidden" style="text-align: center; margin: 40px 0;">
-            <span class="loader"></span>
-            <p style="margin-top: 15px; color: var(--text-muted);">Analyzing prescription with AI...</p>
+        <!-- Processing Step -->
+        <div id="loading" class="hidden" style="text-align: center; padding: 80px 0;">
+            <div class="pulse" style="font-size: 4rem; color: var(--primary); margin-bottom: 32px;">
+                <i class="fa-solid fa-microchip"></i>
+            </div>
+            <h3>AI Analyzing Prescription...</h3>
+            <p style="color: var(--text-muted); margin-top: 12px;">Extracting handwriting and identifying medical fields.</p>
+            <div style="max-width: 400px; height: 8px; background: #e2e8f0; border-radius: 10px; margin: 32px auto; overflow: hidden;">
+                <div id="progressBar" style="width: 30%; height: 100%; background: var(--primary-gradient); border-radius: 10px; transition: width 0.5s;"></div>
+            </div>
         </div>
 
+        <!-- Result Step -->
         <div id="resultSection" class="hidden">
             <div class="result-grid">
-                <div class="card">
-                    <h3>Raw Extracted Text</h3>
-                    <textarea id="rawText" readonly></textarea>
+                <div class="result-card glass-card">
+                    <h3>
+                        Raw OCR Output
+                        <span class="confidence-badge badge-high" id="confidenceBadge">98% Match</span>
+                    </h3>
+                    <div class="form-group">
+                        <textarea id="rawText" class="form-input" readonly></textarea>
+                    </div>
                 </div>
                 
-                <div class="card">
-                    <h3>Structured Fields</h3>
-                    <div class="field-group">
+                <div class="result-card glass-card">
+                    <h3>Extracted Data</h3>
+                    <div class="form-group">
                         <label>Patient Name</label>
-                        <input type="text" id="patientName" class="editable-field">
+                        <input type="text" id="patientName" class="form-input" placeholder="e.g. John Doe">
                     </div>
-                    <div class="field-group">
-                        <label>Date</label>
-                        <input type="text" id="date" class="editable-field">
+                    <div class="form-group">
+                        <label>Date of Prescription</label>
+                        <input type="text" id="date" class="form-input" placeholder="e.g. 12/05/2024">
                     </div>
-                    <div class="field-group">
-                        <label>Medicine / Drug</label>
-                        <input type="text" id="medicine" class="editable-field">
+                    <div class="form-group">
+                        <label>Medicine / Drug Name</label>
+                        <input type="text" id="medicine" class="form-input" placeholder="e.g. Amoxicillin">
                     </div>
-                    <div class="field-group">
-                        <label>Dosage Instructions</label>
-                        <input type="text" id="dosage" class="editable-field">
+                    <div class="form-group">
+                        <label>Dosage & Instructions</label>
+                        <input type="text" id="dosage" class="form-input" placeholder="e.g. 500mg, Twice daily">
                     </div>
                     
-                    <button id="saveBtn" class="btn btn-success">
-                        <i class="fa-solid fa-floppy-disk"></i> Save to Database
-                    </button>
+                    <div style="display: flex; gap: 16px; margin-top: 32px;">
+                        <button id="saveBtn" class="btn btn-primary" style="flex: 2;">
+                            <i class="fa-solid fa-floppy-disk"></i> Confirm & Save
+                        </button>
+                        <button id="discardBtn" class="btn btn-outline" style="flex: 1;">
+                            Discard
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
+
+    <div id="toastContainer" class="toast-container"></div>
+
     <script src="js/app.js"></script>
 </body>
 </html>

@@ -3,26 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prescription Extractor - AI Powered Medical Analysis</title>
+    <title>Prescription Extractor | AI-Powered Healthcare OCR</title>
     <link rel="stylesheet" href="css/style.css">
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <div class="hero">
-            <h1>Prescription Extractor</h1>
-            <p>Digitize and manage medical prescriptions with AI-powered OCR</p>
-        </div>
-
-        <div class="nav-links">
-            <a href="upload.html" class="btn">
-                <i class="fa-solid fa-cloud-arrow-up"></i> New Extraction
-            </a>
-            <a href="dashboard.html" class="btn btn-secondary">
-                <i class="fa-solid fa-table-list"></i> View Records
-            </a>
-        </div>
+    <!-- Background Blobs -->
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
     </div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="container nav-content">
+            <a href="index.html" class="logo">
+                <i class="fa-solid fa-file-medical"></i>
+                <span>PrescriptionX</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="dashboard.html" class="nav-link">Records</a>
+                <a href="upload.html" class="btn btn-primary">Start Extracting</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero container fade-in">
+        <span class="hero-tag">Intelligent OCR Platform</span>
+        <h1>AI-Powered Prescription Extraction Platform</h1>
+        <p>Transform messy handwritten prescriptions into clean, structured digital records in seconds using state-of-the-art AI analysis.</p>
+        <div class="hero-btns">
+            <a href="upload.html" class="btn btn-primary">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Now
+            </a>
+            <a href="dashboard.html" class="btn btn-outline">
+                <i class="fa-solid fa-chart-line"></i> View Dashboard
+            </a>
+        </div>
+    </header>
+
+    <!-- Features Section -->
+    <section class="container features">
+        <div class="feature-card glass-card fade-in" style="animation-delay: 0.1s;">
+            <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
+            <h3>Instant Extraction</h3>
+            <p>Our neural networks process images in under 2 seconds, delivering high-accuracy results for any handwriting style.</p>
+        </div>
+        <div class="feature-card glass-card fade-in" style="animation-delay: 0.2s;">
+            <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <h3>Smart Validation</h3>
+            <p>Automated confidence scoring and field validation ensure that medical data is captured correctly every single time.</p>
+        </div>
+        <div class="feature-card glass-card fade-in" style="animation-delay: 0.3s;">
+            <div class="feature-icon"><i class="fa-solid fa-database"></i></div>
+            <h3>Digital Records</h3>
+            <p>Export results to CSV or sync with your existing EMR systems. Your data is structured, searchable, and secure.</p>
+        </div>
+    </section>
+
+    <!-- Workflow Section -->
+    <section class="container" style="padding: 80px 0; text-align: center;">
+        <h2 style="margin-bottom: 48px;">How It Works</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px;">
+            <div class="workflow-step">
+                <div style="font-size: 2rem; margin-bottom: 16px; color: var(--primary);">01</div>
+                <h4 style="margin-bottom: 8px;">Upload Image</h4>
+                <p style="color: var(--text-muted);">Snap a photo or upload a scan of the prescription.</p>
+            </div>
+            <div class="workflow-step">
+                <div style="font-size: 2rem; margin-bottom: 16px; color: var(--accent);">02</div>
+                <h4 style="margin-bottom: 8px;">AI Processing</h4>
+                <p style="color: var(--text-muted);">Our OCR engine extracts text and identifies medical fields.</p>
+            </div>
+            <div class="workflow-step">
+                <div style="font-size: 2rem; margin-bottom: 16px; color: var(--success);">03</div>
+                <h4 style="margin-bottom: 8px;">Review & Save</h4>
+                <p style="color: var(--text-muted);">Verify the extracted data and save it to your dashboard.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="container" style="padding: 60px 0; border-top: 1px solid var(--glass-border); margin-top: 80px; display: flex; justify-content: space-between; align-items: center;">
+        <div class="logo" style="font-size: 1.2rem;">
+            <i class="fa-solid fa-file-medical"></i>
+            <span>PrescriptionX</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">© 2024 Prescription Extractor. All rights reserved.</p>
+    </footer>
+
+    <script src="js/app.js"></script>
 </body>
 </html>
