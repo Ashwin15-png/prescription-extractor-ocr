@@ -1,24 +1,36 @@
-# 🏥 Prescription Extractor
+# 🏥 Prescription Extractor - AI Powered Healthcare OCR
 
-A premium full-stack healthcare web application to upload prescription images, extract text using AI-powered OCR, and manage medical records with a structured database.
+A premium, production-grade healthcare platform designed to digitize handwritten prescriptions using advanced AI-powered OCR. This project transforms messy medical paperwork into structured, searchable digital records with a stunning, modern UI.
 
 > [!TIP]
 > **[Check the Verification Guide](./Verification_Guide.md)** to learn how to test the database and live website.
 
+## ✨ Premium Features
+
+- **🎨 Modern SaaS Aesthetic:** A high-end interface featuring glassmorphism, electric indigo gradients, and smooth micro-animations.
+- **🧠 AI-Powered OCR:** Real-time text extraction using Tesseract OCR, with automatic identification of patient names, dates, medicines, and dosages.
+- **📂 Interactive Dashboard:** A comprehensive analytics-style dashboard to manage medical records, complete with search, filtering, and CSV export.
+- **⚡ Smart Workflow:** Drag-and-drop upload functionality with real-time processing animations and instant validation badges.
+- **📱 Responsive Design:** Fully optimized for desktop, tablet, and mobile devices.
+
 ## 🏗️ Tech Stack
 
-- **Backend:** FastAPI, PostgreSQL, SQLAlchemy, pytesseract, OpenCV, python-dotenv
-- **Frontend:** Premium Vanilla CSS (Glassmorphism), Vanilla JavaScript, Google Fonts (Outfit, Inter)
-- **Database:** PostgreSQL (for production-ready data persistence)
-- **Environment Management:** python-dotenv
+- **Backend:** FastAPI (Python), PostgreSQL, SQLAlchemy
+- **OCR Engine:** Tesseract OCR, OpenCV
+- **Frontend:** Premium Vanilla HTML/CSS/JS (No frameworks, lightweight)
+- **Design System:** Glassmorphism, Google Fonts (Outfit, Inter, Poppins)
+- **Database:** PostgreSQL (Hosted on Neon or Local)
 
 ## ⚙️ Prerequisites
 
 1. **Python 3.8+**
-2. **PostgreSQL:** Ensure you have a running PostgreSQL instance.
-3. **Tesseract-OCR:** You must install Tesseract OCR on your machine.
-   - Install to: `C:\Program Files\Tesseract-OCR\tesseract.exe` (Windows)
-4. **Environment Variables:** Create a `.env` file in the `backend/` directory with your `DATABASE_URL`.
+2. **PostgreSQL:** A running instance (Local or Neon.tech).
+3. **Tesseract-OCR:** Required for text extraction.
+   - Install to: `C:\Program Files\Tesseract-OCR\tesseract.exe` (Windows default)
+4. **Environment Variables:** Create a `.env` file in the `backend/` directory:
+   ```env
+   DATABASE_URL=postgresql://user:password@localhost/dbname
+   ```
 
 ## 🚀 Setup & Run Instructions
 
@@ -27,31 +39,26 @@ A premium full-stack healthcare web application to upload prescription images, e
 pip install -r backend/requirements.txt
 ```
 
-### 2. Database Seeding (Optional)
-Run the seeding script to populate the database with sample data:
+### 2. Database Initialization
+Populate the database with sample records to see the dashboard in action:
 ```bash
 python seed_data.py
 ```
 
-### 3. Run the Backend
+### 3. Run the Application
 ```bash
 cd backend
 python run.py
 ```
-The application will be available at **`http://localhost:8000`**. The backend now serves the frontend automatically.
-
-## ✨ Features
-
-- **Premium UI/UX:** A modern, glassmorphic design system for a high-end feel.
-- **AI Extraction:** Automatic field extraction for Patient Name, Date, Medicine, and Dosage.
-- **Smart Upload:** Drag-and-drop or click to upload; processing starts automatically.
-- **Data Dashboard:** View and refresh stored medical records in a sleek data grid.
+The application will be live at **`http://localhost:8000`**.
 
 ## 📂 Project Structure
 
 - `backend/`: FastAPI core, PostgreSQL models, and OCR logic.
-- `frontend/`: 
-  - `web/`: Premium HTML/CSS/JS frontend files.
-  - `streamlit/`: Test environment for OCR validation.
-- `uploads/`: Temporary image storage for processing.
-- `seed_data.py`: Utility script for database initialization.
+- `frontend/web/`: Premium UI assets (HTML, CSS, JS).
+- `uploads/`: Temporary storage for processed images.
+- `seed_data.py`: Database initialization script.
+
+---
+
+*Developed with ❤️ for the Healthcare Community.*
