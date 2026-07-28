@@ -39,14 +39,16 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-XSS-Protection"] = "1; mode=block"
     return response
 
-# CORS Configuration
+# CORS Configuration for Local & Vercel Deployments
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Global Exception Handlers
 @app.exception_handler(StarletteHTTPException)

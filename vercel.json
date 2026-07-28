@@ -6,6 +6,8 @@
     { "source": "/upload", "destination": "/frontend/web/upload.html" },
     { "source": "/dashboard", "destination": "/frontend/web/dashboard.html" },
     { "source": "/analytics", "destination": "/frontend/web/analytics.html" },
+    { "source": "/css/(.*)", "destination": "/frontend/web/css/$1" },
+    { "source": "/js/(.*)", "destination": "/frontend/web/js/$1" },
     { "source": "/(.*)", "destination": "/frontend/web/$1" }
   ]
 }
