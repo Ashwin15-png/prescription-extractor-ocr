@@ -130,17 +130,40 @@ def perform_ocr(image_path: str) -> str:
         # Return the actual error message so the user can see what failed in the cloud
         return f"EXTRACTION_FAILED:\n{err_msg}\nPlease ensure Tesseract is installed in the deployment environment."
 
-def get_ocr_confidence(image_path: str) -> int:
-    """Calculate average OCR confidence score (0-100) using pytesseract word confidence data."""
+def analyze_image_quality(image_path: str) -> Dict[str, Any]:
+    """Calculate average OCR confidence score, blur metrics, and detect QR codes."""
+    metrics = {
+        "confidence": 85,
+        "image_quality": 100,
+        "blur_detected": False,
+        "qr_code_data": ""
+    }
+    
     try:
         img = cv2.imread(image_path)
         if img is None:
-            return 85
+            return metrics
+            
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) if len(img.shape) == 3 else img
+        
+        # Blur Detection using Laplacian Variance
+        variance = cv2.Laplacian(gray, cv2.CV_64F).var()
+        metrics["image_quality"] = min(100, int(variance / 10))
+        metrics["blur_detected"] = variance < 100
+        
+        # QR Code Detection
+        qr_decoder = cv2.QRCodeDetector()
+        data, bbox, _ = qr_decoder.detectAndDecode(img)
+        if data:
+            metrics["qr_code_data"] = data
+
         processed = preprocess_image(img)
-        data = pytesseract.image_to_data(processed, output_type=pytesseract.Output.DICT)
-        scores = [int(c) for c in data.get("conf", []) if str(c).lstrip("-").isdigit() and int(c) >= 0]
+        tess_data = pytesseract.image_to_data(processed, output_type=pytesseract.Output.DICT)
+        scores = [int(c) for c in tess_data.get("conf", []) if str(c).lstrip("-").isdigit() and int(c) >= 0]
         if scores:
-            return int(sum(scores) / len(scores))
-    except Exception:
-        pass
-    return 92
+            metrics["confidence"] = int(sum(scores) / len(scores))
+            
+    except Exception as e:
+        logger.warning(f"Image analysis error: {e}")
+        
+    return metrics

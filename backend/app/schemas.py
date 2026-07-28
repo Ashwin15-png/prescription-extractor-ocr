@@ -13,10 +13,26 @@ class ExtractedFields(BaseModel):
     gender: Optional[str] = Field("N/A", json_schema_extra={"example": "Female"})
     document_type: Optional[str] = Field("Prescription", json_schema_extra={"example": "Prescription"})
 
+    hospital_address: Optional[str] = ""
+    registration_num: Optional[str] = ""
+    generic_name: Optional[str] = ""
+    strength: Optional[str] = ""
+    frequency: Optional[str] = ""
+    duration: Optional[str] = ""
+    diagnosis: Optional[str] = ""
+    symptoms: Optional[str] = ""
+    department: Optional[str] = ""
+    follow_up_date: Optional[str] = ""
+    report_num: Optional[str] = ""
+    lab_tests: Optional[str] = ""
+    qr_code_data: Optional[str] = ""
+
 class OCRUploadResponse(BaseModel):
     raw_text: str
     extracted_fields: ExtractedFields
     ocr_confidence: int = Field(..., description="Average OCR confidence score 0-100")
+    image_quality_score: int = Field(100, description="Evaluated Image Clarity 0-100")
+    blur_detected: bool = Field(False, description="Flag indicating potential blur limit")
     is_duplicate: bool = Field(False, description="Flag indicating if a similar record exists")
 
 class PrescriptionCreate(BaseModel):
@@ -29,8 +45,25 @@ class PrescriptionCreate(BaseModel):
     age: Optional[str] = "N/A"
     gender: Optional[str] = "N/A"
     document_type: Optional[str] = "Prescription"
+    
+    hospital_address: Optional[str] = ""
+    registration_num: Optional[str] = ""
+    generic_name: Optional[str] = ""
+    strength: Optional[str] = ""
+    frequency: Optional[str] = ""
+    duration: Optional[str] = ""
+    diagnosis: Optional[str] = ""
+    symptoms: Optional[str] = ""
+    department: Optional[str] = ""
+    follow_up_date: Optional[str] = ""
+    report_num: Optional[str] = ""
+    lab_tests: Optional[str] = ""
+    qr_code_data: Optional[str] = ""
+
     raw_text: Optional[str] = ""
     confidence_score: Optional[int] = 0
+    image_quality_score: Optional[int] = 100
+    blur_detected: Optional[bool] = False
 
 class PrescriptionResponse(BaseModel):
     id: int
@@ -43,8 +76,25 @@ class PrescriptionResponse(BaseModel):
     age: Optional[str] = "N/A"
     gender: Optional[str] = "N/A"
     document_type: Optional[str] = "Prescription"
+    
+    hospital_address: Optional[str] = ""
+    registration_num: Optional[str] = ""
+    generic_name: Optional[str] = ""
+    strength: Optional[str] = ""
+    frequency: Optional[str] = ""
+    duration: Optional[str] = ""
+    diagnosis: Optional[str] = ""
+    symptoms: Optional[str] = ""
+    department: Optional[str] = ""
+    follow_up_date: Optional[str] = ""
+    report_num: Optional[str] = ""
+    lab_tests: Optional[str] = ""
+    qr_code_data: Optional[str] = ""
+
     raw_text: Optional[str] = ""
     confidence_score: Optional[int] = 0
+    image_quality_score: Optional[int] = 100
+    blur_detected: Optional[bool] = False
     created_at: Optional[Any] = None
 
     model_config = ConfigDict(from_attributes=True)

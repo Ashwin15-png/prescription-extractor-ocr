@@ -11,15 +11,36 @@ class Prescription(Base):
     dosage = Column(String(100), nullable=False)
     date = Column(String(50), nullable=False, index=True)
     
-    # Enhanced Healthcare SaaS Metadata Fields
+    # Enhanced Document Intelligence Fields
     doctor_name = Column(String(150), nullable=True, default="Unknown", index=True)
     hospital_name = Column(String(200), nullable=True, default="Unknown", index=True)
+    hospital_address = Column(Text, nullable=True)
+    registration_num = Column(String(100), nullable=True)
+    
     age = Column(String(20), nullable=True, default="N/A")
     gender = Column(String(20), nullable=True, default="N/A")
     document_type = Column(String(50), nullable=True, default="Prescription", index=True)
     
+    # Advanced Medication Fields
+    generic_name = Column(String(200), nullable=True)
+    strength = Column(String(50), nullable=True)
+    frequency = Column(String(50), nullable=True)
+    duration = Column(String(50), nullable=True)
+    
+    # Complete Diagnostics Fields
+    diagnosis = Column(Text, nullable=True)
+    symptoms = Column(Text, nullable=True)
+    department = Column(String(150), nullable=True)
+    follow_up_date = Column(String(50), nullable=True)
+    report_num = Column(String(100), nullable=True)
+    lab_tests = Column(Text, nullable=True) # JSON or CSV string
+    qr_code_data = Column(Text, nullable=True)
+    
+    # OCR Engine Audit Metrics
     raw_text = Column(Text, nullable=True)
     confidence_score = Column(Integer, nullable=True, default=0)
+    image_quality_score = Column(Integer, nullable=True, default=100)
+    blur_detected = Column(Boolean, nullable=True, default=False)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -41,8 +62,25 @@ class Prescription(Base):
             "age": self.age or "N/A",
             "gender": self.gender or "N/A",
             "document_type": self.document_type or "Prescription",
+            
+            "hospital_address": self.hospital_address or "",
+            "registration_num": self.registration_num or "",
+            "generic_name": self.generic_name or "",
+            "strength": self.strength or "",
+            "frequency": self.frequency or "",
+            "duration": self.duration or "",
+            "diagnosis": self.diagnosis or "",
+            "symptoms": self.symptoms or "",
+            "department": self.department or "",
+            "follow_up_date": self.follow_up_date or "",
+            "report_num": self.report_num or "",
+            "lab_tests": self.lab_tests or "",
+            "qr_code_data": self.qr_code_data or "",
+            
             "raw_text": self.raw_text or "",
             "confidence_score": self.confidence_score or 0,
+            "image_quality_score": self.image_quality_score or 100,
+            "blur_detected": self.blur_detected or False,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
 

@@ -69,6 +69,23 @@ def auto_migrate():
                     conn.execute(text("ALTER TABLE prescriptions ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
                 if "updated_at" not in columns:
                     conn.execute(text("ALTER TABLE prescriptions ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+                
+                # Enterprise Document Intelligence Fields
+                for field, t in [("hospital_address", "TEXT"), ("registration_num", "VARCHAR"), 
+                                 ("generic_name", "VARCHAR"), ("strength", "VARCHAR"),
+                                 ("frequency", "VARCHAR"), ("duration", "VARCHAR"),
+                                 ("diagnosis", "TEXT"), ("symptoms", "TEXT"), 
+                                 ("department", "VARCHAR"), ("follow_up_date", "VARCHAR"),
+                                 ("report_num", "VARCHAR"), ("lab_tests", "TEXT"), 
+                                 ("qr_code_data", "TEXT")]:
+                    if field not in columns:
+                        conn.execute(text(f"ALTER TABLE prescriptions ADD COLUMN {field} {t} DEFAULT NULL"))
+
+                if "image_quality_score" not in columns:
+                    conn.execute(text("ALTER TABLE prescriptions ADD COLUMN image_quality_score INTEGER DEFAULT 100"))
+                if "blur_detected" not in columns:
+                    conn.execute(text("ALTER TABLE prescriptions ADD COLUMN blur_detected BOOLEAN DEFAULT FALSE"))
+                    
                 conn.commit()
                 logger.info("Database schema auto-migration check complete.")
     except Exception as e:

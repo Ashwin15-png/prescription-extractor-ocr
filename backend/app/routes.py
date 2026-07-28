@@ -33,43 +33,34 @@ async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_d
     # Validate file extension
     ext = os.path.splitext(file.filename)[1].lower()
     allowed_exts = [".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff"]
-    if ext not in allowed_exts:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid file type '{ext}'. Allowed extensions: {', '.join(allowed_exts)}"
-        )
+async def upload_prescription(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image.")
 
-    # Read and validate file size
     contents = await file.read()
-    max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
-    if len(contents) > max_bytes:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File size exceeds maximum limit of {settings.MAX_UPLOAD_SIZE_MB}MB."
-        )
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size exceeds 10MB limit.")
 
-    # Save to uploads directory
     os.makedirs("uploads", exist_ok=True)
     temp_path = os.path.join("uploads", f"temp_{file.filename}")
     with open(temp_path, "wb") as f:
         f.write(contents)
 
     try:
-        # OCR Processing & Extraction
         raw_text = perform_ocr(temp_path)
         extracted = extract_fields(raw_text)
-        ocr_confidence = get_ocr_confidence(temp_path)
         doc_type = detect_document_type(raw_text)
+        
+        # Enterprise Document Analysis
+        analysis = analyze_image_quality(temp_path)
 
-        # Check for potential duplicates in database
         is_duplicate = False
         if extracted.get("patient_name") != "Unknown" and extracted.get("medicine") != "Not Found":
             existing = db.query(Prescription).filter(
                 Prescription.patient_name.ilike(extracted["patient_name"]),
                 Prescription.medicine.ilike(extracted["medicine"])
             ).first()
-            if existing:
-                is_duplicate = True
+            if existing: is_duplicate = True
 
         response_data = OCRUploadResponse(
             raw_text=raw_text,
@@ -82,9 +73,24 @@ async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_d
                 hospital_name=extracted.get("hospital_name", "Unknown"),
                 age=extracted.get("age", "N/A"),
                 gender=extracted.get("gender", "N/A"),
-                document_type=doc_type
+                document_type=doc_type,
+                hospital_address=extracted.get("hospital_address", ""),
+                registration_num=extracted.get("registration_num", ""),
+                generic_name=extracted.get("generic_name", ""),
+                strength=extracted.get("strength", ""),
+                frequency=extracted.get("frequency", ""),
+                duration=extracted.get("duration", ""),
+                diagnosis=extracted.get("diagnosis", ""),
+                symptoms=extracted.get("symptoms", ""),
+                department=extracted.get("department", ""),
+                follow_up_date=extracted.get("follow_up_date", ""),
+                report_num=extracted.get("report_num", ""),
+                lab_tests=extracted.get("lab_tests", ""),
+                qr_code_data=analysis.get("qr_code_data", "")
             ),
-            ocr_confidence=ocr_confidence,
+            ocr_confidence=analysis.get("confidence", 85),
+            image_quality_score=analysis.get("image_quality", 100),
+            blur_detected=analysis.get("blur_detected", False),
             is_duplicate=is_duplicate
         )
         return response_data
@@ -94,10 +100,8 @@ async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_d
         raise HTTPException(status_code=500, detail=f"Internal OCR error: {str(e)}")
     finally:
         if os.path.exists(temp_path):
-            try:
-                os.remove(temp_path)
-            except Exception:
-                pass
+            try: os.remove(temp_path)
+            except Exception: pass
 
 # ── 2. Save Prescription Endpoint ─────────────────────────────────────────
 @router.post("/save")
@@ -118,14 +122,31 @@ async def save_prescription(data: PrescriptionCreate, db: Session = Depends(get_
             age=data.age or "N/A",
             gender=data.gender or "N/A",
             document_type=data.document_type or "Prescription",
+            
+            hospital_address=data.hospital_address,
+            registration_num=data.registration_num,
+            generic_name=data.generic_name,
+            strength=data.strength,
+            frequency=data.frequency,
+            duration=data.duration,
+            diagnosis=data.diagnosis,
+            symptoms=data.symptoms,
+            department=data.department,
+            follow_up_date=data.follow_up_date,
+            report_num=data.report_num,
+            lab_tests=data.lab_tests,
+            qr_code_data=data.qr_code_data,
+            
             raw_text=data.raw_text,
-            confidence_score=data.confidence_score or 90
+            confidence_score=data.confidence_score or 90,
+            image_quality_score=data.image_quality_score or 100,
+            blur_detected=data.blur_detected or False
         )
         db.add(new_prescription)
         db.commit()
         db.refresh(new_prescription)
         
-        logger.info(f"Successfully saved prescription ID {new_prescription.id} for {new_prescription.patient_name}")
+        logger.info(f"Successfully saved ID {new_prescription.id}")
         return {"message": "Prescription saved successfully!", "id": new_prescription.id}
 
     except Exception as e:
@@ -218,15 +239,15 @@ async def get_analytics(db: Session = Depends(get_db)):
 async def export_csv(db: Session = Depends(get_db)):
     try:
         prescriptions = db.query(Prescription).order_by(Prescription.id.desc()).all()
-        lines = ["ID,Patient Name,Medicine,Dosage,Date,Doctor Name,Hospital Name,Confidence Score\n"]
+        lines = ["ID,Patient Name,Medicine,Dosage,Date,Doctor Name,Hospital Name,Diagnosis,Symptoms,Department,Follow_Up_Date,Lab_Tests,OCR Confidence,Image Quality\n"]
         for p in prescriptions:
-            patient = f'"{p.patient_name}"'
-            med = f'"{p.medicine}"'
-            dosage = f'"{p.dosage}"'
-            date_val = f'"{p.date}"'
-            doc = f'"{p.doctor_name or "Unknown"}"'
-            hosp = f'"{p.hospital_name or "Unknown"}"'
-            lines.append(f"{p.id},{patient},{med},{dosage},{date_val},{doc},{hosp},{p.confidence_score or 90}\n")
+            # Safely quote items for CSV
+            def _q(val): 
+                if not val: return '""'
+                v_str = str(val).replace('"', '""')
+                return f'"{v_str}"'
+            
+            lines.append(f"{p.id},{_q(p.patient_name)},{_q(p.medicine)},{_q(p.dosage)},{_q(p.date)},{_q(p.doctor_name)},{_q(p.hospital_name)},{_q(p.diagnosis)},{_q(p.symptoms)},{_q(p.department)},{_q(p.follow_up_date)},{_q(p.lab_tests)},{p.confidence_score or 90},{p.image_quality_score or 100}\n")
             
         csv_data = "".join(lines)
         return StreamingResponse(
@@ -249,7 +270,7 @@ async def export_excel(db: Session = Depends(get_db)):
         ws.title = "Prescriptions Report"
         
         # Headers
-        headers = ["ID", "Patient Name", "Medicine Prescribed", "Dosage & Frequency", "Prescription Date", "Doctor Name", "Hospital / Clinic", "OCR Confidence"]
+        headers = ["ID", "Patient Name", "Medicine Prescribed", "Dosage & Frequency", "Prescription Date", "Doctor Name", "Hospital / Clinic", "Diagnosis", "Symptoms", "Lab Tests", "OCR Confidence", "Quality Score"]
         ws.append(headers)
 
         # Style header row
@@ -267,7 +288,8 @@ async def export_excel(db: Session = Depends(get_db)):
             ws.append([
                 p.id, p.patient_name, p.medicine, p.dosage, p.date,
                 p.doctor_name or "Unknown", p.hospital_name or "Unknown",
-                f"{p.confidence_score or 90}%"
+                p.diagnosis or "N/A", p.symptoms or "N/A", p.lab_tests or "N/A",
+                f"{p.confidence_score or 90}%", f"{p.image_quality_score or 100}%"
             ])
 
         # Auto-adjust column widths
