@@ -125,20 +125,10 @@ def perform_ocr(image_path: str) -> str:
 
         return text.strip() if text else "No legible text extracted."
     except Exception as e:
+        err_msg = f"OCR Error: {e}"
         logger.error(f"OCR Error processing {image_path}: {e}")
-        # Safe fallback for demonstration environments without Tesseract binary
-        return (
-            "CITY CARE SPECIALTY HOSPITAL\n"
-            "Dr. John Doe, MD (Cardiology)\n"
-            "Date: 28/07/2026\n"
-            "Patient Name: Alice Smith (Age 34/F)\n"
-            "Diagnosis: Upper Respiratory Track Infection\n"
-            "Rx:\n"
-            "Amoxicillin 500mg\n"
-            "1-0-1 after meals for 5 days\n"
-            "Paracetamol 650mg\n"
-            "1-1-1 as needed"
-        )
+        # Return the actual error message so the user can see what failed in the cloud
+        return f"EXTRACTION_FAILED:\n{err_msg}\nPlease ensure Tesseract is installed in the deployment environment."
 
 def get_ocr_confidence(image_path: str) -> int:
     """Calculate average OCR confidence score (0-100) using pytesseract word confidence data."""
