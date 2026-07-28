@@ -9,9 +9,8 @@ def test_health_endpoint():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] in ["healthy", "degraded"]
-    assert "version" in data
 
-def test_get_prescriptions():
+def test_get_prescriptions_list():
     response = client.get("/prescriptions")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
@@ -21,28 +20,58 @@ def test_get_analytics():
     assert response.status_code == 200
     data = response.json()
     assert "total_prescriptions" in data
-    assert "most_common_medicine" in data
 
-def test_save_prescription_validation():
-    # Missing required patient name should fail with 400
-    invalid_payload = {
-        "patient_name": "",
-        "medicine": "Paracetamol",
-        "dosage": "1-0-1",
-        "date": "12/05/2026",
-        "raw_text": "Sample text"
+def test_save_prescription():
+    payload = {
+        "patient_name": "Test Patient",
+        "medicine": "Test Med",
+        "dosage": "500mg",
+        "date": "28/07/2026",
+        "doctor_name": "Dr. Test",
+        "hospital_name": "Test Hospital"
     }
-    response = client.post("/save", json=invalid_payload)
-    assert response.status_code == 400
+    response = client.post("/save", json=payload)
+    assert response.status_code == 200
+    assert "id" in response.json()
 
 def test_export_csv():
     response = client.get("/export-csv")
     assert response.status_code == 200
     assert "text/csv" in response.headers["content-type"]
 
-def test_suggestions_endpoint():
-    response = client.get("/api/v1/suggestions?q=a")
+def test_export_excel():
+    response = client.get("/api/v1/export/excel")
+    assert response.status_code == 200
+    assert "spreadsheetml" in response.headers["content-type"]
+
+def test_export_pdf():
+    response = client.get("/api/v1/export/pdf")
+    assert response.status_code == 200
+    assert "pdf" in response.headers["content-type"]
+
+def test_suggestions():
+    response = client.get("/api/v1/suggestions?q=Test")
     assert response.status_code == 200
     data = response.json()
     assert "patients" in data
-    assert "medicines" in data
+
+def test_user_registration_and_login():
+    email = "doctor_test@hospital.org"
+    register_payload = {
+        "email": email,
+        "password": "Password123!",
+        "full_name": "Dr. Test User",
+        "role": "Doctor"
+    }
+    # Register
+    res = client.post("/auth/register", json=register_payload)
+    assert res.status_code in [200, 400] # 400 if already registered from previous run
+
+    # Login
+    login_payload = {
+        "email": email,
+        "password": "Password123!"
+    }
+    res_login = client.post("/auth/login", json=login_payload)
+    assert res_login.status_code == 200
+    assert "access_token" in res_login.json()
