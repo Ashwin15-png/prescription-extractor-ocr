@@ -75,3 +75,23 @@ def test_user_registration_and_login():
     res_login = client.post("/auth/login", json=login_payload)
     assert res_login.status_code == 200
     assert "access_token" in res_login.json()
+
+def test_delete_prescription():
+    # First create a prescription
+    payload = {
+        "patient_name": "Delete Me",
+        "medicine": "Test Med",
+        "dosage": "50mg",
+        "date": "28/07/2026",
+    }
+    create_res = client.post("/save", json=payload)
+    assert create_res.status_code == 200
+    record_id = create_res.json()["id"]
+
+    # Now delete it
+    delete_res = client.delete(f"/prescriptions/{record_id}")
+    assert delete_res.status_code == 200
+    
+    # Try fetching it
+    fetch_res = client.get(f"/prescriptions?patient=Delete Me")
+    assert len(fetch_res.json()) == 0

@@ -156,6 +156,23 @@ async def get_prescriptions(
         logger.error(f"Error fetching prescriptions: {e}")
         raise HTTPException(status_code=500, detail="Error retrieving records from database.")
 
+@router.delete("/prescriptions/{record_id}")
+async def delete_prescription(record_id: int, db: Session = Depends(get_db)):
+    try:
+        record = db.query(Prescription).filter(Prescription.id == record_id).first()
+        if not record:
+            raise HTTPException(status_code=404, detail="Record not found.")
+        db.delete(record)
+        db.commit()
+        logger.info(f"Deleted prescription ID {record_id}")
+        return {"message": "Record deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error deleting prescription {record_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error deleting record.")
+
 # ── 4. Analytics Summary Endpoint ─────────────────────────────────────────
 @router.get("/analytics")
 async def get_analytics(db: Session = Depends(get_db)):
