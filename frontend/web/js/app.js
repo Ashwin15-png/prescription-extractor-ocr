@@ -284,33 +284,7 @@ if (discardBtn) {
     });
 }
 
-// --- Dashboard Logic ---
-const recordsBody = document.getElementById('recordsBody');
-const searchInput = document.getElementById('searchInput');
-const refreshBtn = document.getElementById('refreshBtn');
-let allRecords = [];
-
-const fetchPrescriptions = async (params = {}) => {
-    if (!recordsBody) return;
-
-    // Show skeleton while loading
-    document.querySelectorAll('.skeleton-row').forEach(r => r.style.display = '');
-
-    const qs = new URLSearchParams();
-    if (params.patient)  qs.append('patient',  params.patient);
-    if (params.medicine) qs.append('medicine', params.medicine);
-    if (params.date)     qs.append('date',     params.date);
-
-    try {
-        const response = await fetch(`${API_BASE}/prescriptions?${qs.toString()}`);
-        allRecords = await response.json();
-        updateDashboardStats(allRecords);
-        renderTable(allRecords);
-    } catch (error) {
-        console.error("Error fetching records:", error);
-        showToast("Failed to load records.", "error");
-    }
-};
+// Duplicate Dashboard definitions removed representing bug fix.
 
 function renderTable(records) {
     if (!recordsBody) return;
