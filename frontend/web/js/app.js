@@ -1,13 +1,19 @@
 const API_BASE = (function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('api')) {
+        const paramApi = urlParams.get('api');
+        localStorage.setItem('API_BASE_URL', paramApi);
+        return paramApi;
+    }
+    if (localStorage.getItem('API_BASE_URL')) {
+        return localStorage.getItem('API_BASE_URL');
+    }
     if (window.API_BASE_URL) return window.API_BASE_URL;
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         return "http://127.0.0.1:8000";
     }
-    // Production Render Backend URL fallback
     return "https://prescription-extractor-api.onrender.com";
 })();
-
-
 
 // --- Toast System ---
 function showToast(message, type = 'info') {
@@ -35,6 +41,50 @@ function showToast(message, type = 'info') {
         setTimeout(() => toast.remove(), 300);
     }, 4000);
 }
+
+// --- Navigation & Dashboard Logic ---
+const recordsBody = document.getElementById('recordsBody');
+const searchInput = document.getElementById('searchInput');
+const refreshBtn = document.getElementById('refreshBtn');
+let allRecords = [];
+
+const fetchPrescriptions = async (params = {}, retryCount = 0) => {
+    if (!recordsBody) return;
+
+    // Show skeleton while loading
+    document.querySelectorAll('.skeleton-row').forEach(r => r.style.display = '');
+
+    const qs = new URLSearchParams();
+    if (params.patient)  qs.append('patient',  params.patient);
+    if (params.medicine) qs.append('medicine', params.medicine);
+    if (params.date)     qs.append('date',     params.date);
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+        const response = await fetch(`${API_BASE}/prescriptions?${qs.toString()}`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        allRecords = await response.json();
+        updateDashboardStats(allRecords);
+        renderTable(allRecords);
+    } catch (error) {
+        console.error("Error fetching records:", error);
+        if (retryCount < 3) {
+            showToast("Warming up cloud backend server... Retrying...", "info");
+            setTimeout(() => fetchPrescriptions(params, retryCount + 1), 4000);
+        } else {
+            showToast("Unable to reach backend. Check Render server status.", "error");
+            renderTable([]);
+        }
+    }
+};
+
 
 // --- Upload & Drag-and-Drop ---
 const imageInput = document.getElementById('imageInput');
