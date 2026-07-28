@@ -1,8 +1,9 @@
 fastapi
 uvicorn
+gunicorn
 sqlalchemy
 pytesseract
-opencv-python
+opencv-python-headless
 pillow
 python-multipart
 streamlit
