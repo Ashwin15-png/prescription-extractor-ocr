@@ -1,6 +1,12 @@
-const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
-    ? (window.API_BASE_URL || "http://127.0.0.1:8000")
-    : (window.API_BASE_URL || window.location.origin);
+const API_BASE = (function() {
+    if (window.API_BASE_URL) return window.API_BASE_URL;
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return "http://127.0.0.1:8000";
+    }
+    // Production Render Backend URL fallback
+    return "https://prescription-extractor-api.onrender.com";
+})();
+
 
 
 // --- Toast System ---

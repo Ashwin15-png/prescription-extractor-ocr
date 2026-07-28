@@ -2,9 +2,14 @@
 // Fetches from GET /analytics and GET /prescriptions to build charts + table
 
 (function () {
-    const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
-        ? (window.API_BASE_URL || "http://127.0.0.1:8000")
-        : (window.API_BASE_URL || window.location.origin);
+    const API_BASE = (function() {
+        if (window.API_BASE_URL) return window.API_BASE_URL;
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return "http://127.0.0.1:8000";
+        }
+        return "https://prescription-extractor-api.onrender.com";
+    })();
+
 
 
     // Chart colour palette matching the premium theme
