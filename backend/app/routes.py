@@ -191,12 +191,20 @@ async def get_analytics(db: Session = Depends(get_db)):
         ).filter(Prescription.doctor_name != "Unknown").group_by(Prescription.doctor_name).order_by(func.count(Prescription.id).desc()).first()
         top_doctor = top_doc_query[0] if top_doc_query else "N/A"
 
+        # Top dosage
+        top_dos_query = db.query(
+            Prescription.dosage, func.count(Prescription.id).label("count")
+        ).filter(Prescription.dosage != "Not Found").group_by(Prescription.dosage).order_by(func.count(Prescription.id).desc()).first()
+        top_dosage = top_dos_query[0] if top_dos_query else "N/A"
+
         # Average confidence
         avg_conf = db.query(func.avg(Prescription.confidence_score)).scalar() or 92.5
 
         return {
             "total_prescriptions": total,
+            "recent_uploads": total, # For now, recent is total. Could query dates.
             "most_common_medicine": top_medicine,
+            "most_common_dosage": top_dosage,
             "most_frequent_doctor": top_doctor,
             "average_confidence_score": round(float(avg_conf), 1),
             "ocr_accuracy_percentage": "94.2%"

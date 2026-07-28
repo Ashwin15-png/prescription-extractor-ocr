@@ -1,9 +1,10 @@
 {
+  "trailingSlash": false,
   "rewrites": [
+    { "source": "/", "destination": "/frontend/web/index.html" },
     { "source": "/upload", "destination": "/frontend/web/upload.html" },
     { "source": "/dashboard", "destination": "/frontend/web/dashboard.html" },
     { "source": "/analytics", "destination": "/frontend/web/analytics.html" },
-    { "source": "/", "destination": "/frontend/web/index.html" },
     { "source": "/(.*)", "destination": "/frontend/web/$1" }
   ]
 }
