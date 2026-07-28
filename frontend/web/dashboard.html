@@ -22,6 +22,7 @@
             <div class="nav-links">
                 <a href="index.html" class="nav-link">Home</a>
                 <a href="dashboard.html" class="nav-link">Records</a>
+                <a href="analytics.html" class="nav-link">Analytics</a>
                 <a href="upload.html" class="btn btn-primary">Start Extracting</a>
             </div>
         </div>
@@ -33,11 +34,20 @@
                 <h2 style="font-size: 2rem;">Patient Records</h2>
                 <p style="color: var(--text-muted); margin-top: 4px;">Manage and analyze all extracted prescriptions.</p>
             </div>
-            <div style="display: flex; gap: 12px;">
-                <button id="exportCSV" class="btn btn-outline">
-                    <i class="fa-solid fa-download"></i> Export CSV
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="exportCSV" class="btn btn-outline" style="padding: 10px 16px; font-size: 0.9rem;" title="Export filtered records to CSV">
+                    <i class="fa-solid fa-file-csv"></i> CSV
                 </button>
-                <button id="refreshBtn" class="btn btn-primary">
+                <button id="exportExcel" class="btn btn-outline" style="padding: 10px 16px; font-size: 0.9rem;" title="Export filtered records to Excel">
+                    <i class="fa-solid fa-file-excel"></i> Excel
+                </button>
+                <button id="exportPDF" class="btn btn-outline" style="padding: 10px 16px; font-size: 0.9rem;" title="Download PDF Report">
+                    <i class="fa-solid fa-file-pdf"></i> PDF
+                </button>
+                <button id="printReportBtn" class="btn btn-outline" style="padding: 10px 16px; font-size: 0.9rem;" title="Print Report">
+                    <i class="fa-solid fa-print"></i> Print
+                </button>
+                <button id="refreshBtn" class="btn btn-primary" style="padding: 10px 18px; font-size: 0.9rem;">
                     <i class="fa-solid fa-rotate"></i> Refresh
                 </button>
             </div>
@@ -87,15 +97,26 @@
         <div class="table-controls">
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="searchInput" placeholder="Search by patient name or medicine...">
+                <input type="text" id="searchInput" placeholder="Search by patient name, doctor or medicine..." autocomplete="off">
+                <div id="searchSuggestions" class="suggestions-dropdown hidden"></div>
             </div>
-            <div style="display: flex; gap: 12px;">
-                <select class="form-input" id="dateFilter" style="width: auto; padding: 10px 16px;">
-                    <option value="">All Time</option>
-                    <option value="today">Today</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <input type="text" id="medicineFilter" class="form-input" placeholder="Filter by medicine" style="width: 180px; padding: 10px 14px;">
+                <input type="text" id="dateFilter" class="form-input" placeholder="Filter by date" style="width: 150px; padding: 10px 14px;">
+                <select id="sortSelect" class="form-input" style="width: auto; padding: 10px 14px;">
+                    <option value="">Sort by...</option>
+                    <option value="name_asc">Name A→Z</option>
+                    <option value="name_desc">Name Z→A</option>
+                    <option value="medicine_asc">Medicine A→Z</option>
+                    <option value="id_desc">Newest First</option>
+                    <option value="id_asc">Oldest First</option>
                 </select>
+                <button id="applyFilters" class="btn btn-primary" style="padding: 10px 20px;">
+                    <i class="fa-solid fa-filter"></i> Filter
+                </button>
+                <button id="clearFilters" class="btn btn-outline" style="padding: 10px 16px;">
+                    Clear
+                </button>
             </div>
         </div>
 
@@ -109,23 +130,18 @@
                         <th>Medicine</th>
                         <th>Dosage</th>
                         <th>Date</th>
+                        <th>Doctor / Hospital</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="recordsBody">
-                    <!-- Skeletons while loading -->
                     <tr class="skeleton-row">
-                        <td colspan="6" style="padding: 0;">
+                        <td colspan="7" style="padding: 0;">
                             <div class="skeleton" style="height: 60px; margin: 10px 24px; border-radius: 8px;"></div>
                         </td>
                     </tr>
                     <tr class="skeleton-row">
-                        <td colspan="6" style="padding: 0;">
-                            <div class="skeleton" style="height: 60px; margin: 10px 24px; border-radius: 8px;"></div>
-                        </td>
-                    </tr>
-                    <tr class="skeleton-row">
-                        <td colspan="6" style="padding: 0;">
+                        <td colspan="7" style="padding: 0;">
                             <div class="skeleton" style="height: 60px; margin: 10px 24px; border-radius: 8px;"></div>
                         </td>
                     </tr>
@@ -144,6 +160,80 @@
             </div>
         </div>
     </main>
+
+    <!-- ── View Details Modal ─────────────────────────────────────────── -->
+    <div id="detailsModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-box glass-card fade-in">
+            <div class="modal-header">
+                <h3 id="modalTitle"><i class="fa-solid fa-file-medical" style="color:var(--primary);"></i> Prescription Details</h3>
+                <button class="btn btn-ghost modal-close" id="closeDetailsModal" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-fields-grid">
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-user"></i> Patient Name</span>
+                        <span class="modal-field-value" id="mdPatientName">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-capsules"></i> Medicine</span>
+                        <span class="modal-field-value" id="mdMedicine">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-syringe"></i> Dosage</span>
+                        <span class="modal-field-value" id="mdDosage">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-calendar"></i> Date</span>
+                        <span class="modal-field-value" id="mdDate">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-user-doctor"></i> Doctor Name</span>
+                        <span class="modal-field-value" id="mdDoctorName">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-hospital"></i> Hospital</span>
+                        <span class="modal-field-value" id="mdHospitalName">—</span>
+                    </div>
+                </div>
+                <div class="modal-raw-section">
+                    <span class="modal-field-label"><i class="fa-solid fa-align-left"></i> Raw OCR Text</span>
+                    <pre class="modal-raw-text" id="mdRawText"></pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="closeDetailsModalFooter">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Delete Confirm Modal ───────────────────────────────────────── -->
+    <div id="deleteModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+        <div class="modal-box modal-box-sm glass-card fade-in">
+            <div class="modal-header">
+                <h3 id="deleteModalTitle" style="color: var(--danger);">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Delete Record
+                </h3>
+                <button class="btn btn-ghost modal-close" id="closeDeleteModal" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding-top: 8px;">
+                <p style="color: var(--text-secondary);">
+                    Are you sure you want to delete the record for
+                    <strong id="deletePatientName" style="color: var(--secondary);"></strong>?
+                    This action cannot be undone.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelDeleteBtn">Cancel</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div id="toastContainer" class="toast-container"></div>
 

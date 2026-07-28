@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics | PrescriptionX</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <nav>
+        <div class="container nav-content">
+            <a href="index.html" class="logo">
+                <i class="fa-solid fa-file-medical"></i>
+                <span>PrescriptionX</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="dashboard.html" class="nav-link">Records</a>
+                <a href="analytics.html" class="nav-link" style="color: var(--primary);">Analytics</a>
+                <a href="upload.html" class="btn btn-primary">Start Extracting</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container fade-in" style="padding: 40px 0 80px;">
+
+        <!-- Page Header -->
+        <div style="margin-bottom: 40px;">
+            <h2 style="font-size: 2rem;">Analytics Overview</h2>
+            <p style="color: var(--text-muted); margin-top: 4px;">Insights and trends from all extracted prescriptions.</p>
+        </div>
+
+        <!-- Summary Stat Cards -->
+        <div class="stats-grid" id="summaryCards">
+            <div class="stat-card glass-card">
+                <div class="stat-icon" style="background: var(--primary-gradient);">
+                    <i class="fa-solid fa-file-prescription"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Total Prescriptions</h4>
+                    <div class="value" id="statTotal">—</div>
+                </div>
+            </div>
+            <div class="stat-card glass-card">
+                <div class="stat-icon" style="background: var(--accent-gradient);">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Recent Uploads</h4>
+                    <div class="value" id="statRecent">—</div>
+                </div>
+            </div>
+            <div class="stat-card glass-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #c084fc, #a855f7);">
+                    <i class="fa-solid fa-capsules"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Top Medicine</h4>
+                    <div class="value" id="statTopMed" style="font-size: 1.1rem;">—</div>
+                </div>
+            </div>
+            <div class="stat-card glass-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fa-solid fa-syringe"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Top Dosage</h4>
+                    <div class="value" id="statTopDosage" style="font-size: 1.1rem;">—</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 40px;" id="chartsRow">
+
+            <!-- Medicine Distribution -->
+            <div class="glass-card" style="padding: 32px;">
+                <h3 style="margin-bottom: 8px; font-size: 1.2rem;">Medicine Distribution</h3>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 24px;">Top prescribed medicines by frequency</p>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="medicineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Dosage Breakdown -->
+            <div class="glass-card" style="padding: 32px;">
+                <h3 style="margin-bottom: 8px; font-size: 1.2rem;">Dosage Breakdown</h3>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 24px;">Most common dosage patterns</p>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="dosageChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prescriptions Over Time -->
+        <div class="glass-card" style="padding: 32px; margin-top: 32px;">
+            <h3 style="margin-bottom: 8px; font-size: 1.2rem;">Prescriptions Over Time</h3>
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 24px;">Volume of records grouped by date</p>
+            <div style="position: relative; height: 260px;">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Medicines Table -->
+        <div class="glass-card" style="margin-top: 32px; overflow: hidden;">
+            <div style="padding: 24px 32px; border-bottom: 1px solid #e2e8f0;">
+                <h3 style="font-size: 1.2rem;">Medicine Frequency Table</h3>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 4px;">Ranked list of all medicines found in records</p>
+            </div>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="background: #f8fafc; padding: 14px 32px; text-align: left; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); border-bottom: 1px solid #e2e8f0;">#</th>
+                        <th style="background: #f8fafc; padding: 14px 32px; text-align: left; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); border-bottom: 1px solid #e2e8f0;">Medicine</th>
+                        <th style="background: #f8fafc; padding: 14px 32px; text-align: left; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); border-bottom: 1px solid #e2e8f0;">Count</th>
+                        <th style="background: #f8fafc; padding: 14px 32px; text-align: left; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); border-bottom: 1px solid #e2e8f0;">Share</th>
+                    </tr>
+                </thead>
+                <tbody id="medTableBody">
+                    <tr>
+                        <td colspan="4" style="padding: 0;">
+                            <div class="skeleton" style="height: 52px; margin: 10px 32px; border-radius: 8px;"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="4" style="padding: 0;">
+                            <div class="skeleton" style="height: 52px; margin: 10px 32px; border-radius: 8px;"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="analyticsLoader" style="display: none; position: fixed; inset: 0; background: rgba(241,245,249,0.7); backdrop-filter: blur(4px); z-index: 200; align-items: center; justify-content: center; flex-direction: column; gap: 16px;">
+        <div class="pulse" style="font-size: 3rem; color: var(--primary);"><i class="fa-solid fa-chart-pie"></i></div>
+        <p style="font-weight: 600; color: var(--text-secondary);">Loading analytics...</p>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="js/app.js"></script>
+    <script src="js/analytics.js"></script>
+</body>
+</html>

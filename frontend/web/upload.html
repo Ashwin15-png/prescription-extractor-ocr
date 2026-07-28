@@ -71,34 +71,58 @@
 
         <!-- Result Step -->
         <div id="resultSection" class="hidden">
+            <div id="duplicateAlert" class="hidden" style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); color: #92400e; padding: 14px 20px; border-radius: 12px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; font-weight: 500;">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.25rem;"></i>
+                <span>Potential duplicate detected! A prescription record with matching patient name and medicine already exists in the system.</span>
+            </div>
+
             <div class="result-grid">
                 <div class="result-card glass-card">
-                    <h3>
-                        Raw OCR Output
-                        <span class="confidence-badge badge-high" id="confidenceBadge">98% Match</span>
-                    </h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="margin: 0;">Raw OCR Output</h3>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button class="btn btn-outline" id="autoCleanBtn" style="padding: 6px 12px; font-size: 0.8rem;" title="Auto-clean raw text">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Clean
+                            </button>
+                            <span class="confidence-badge badge-high" id="confidenceBadge">98% Match</span>
+                        </div>
+                    </div>
                     <div class="form-group">
-                        <textarea id="rawText" class="form-input" readonly></textarea>
+                        <textarea id="rawText" class="form-input" placeholder="Raw text output from OCR engine..."></textarea>
                     </div>
                 </div>
                 
                 <div class="result-card glass-card">
-                    <h3>Extracted Data</h3>
+                    <h3>Extracted Data Fields</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-user" style="color: var(--primary);"></i> Patient Name</label>
+                            <input type="text" id="patientName" class="form-input" placeholder="e.g. John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-calendar" style="color: var(--primary);"></i> Date</label>
+                            <input type="text" id="date" class="form-input" placeholder="e.g. 12/05/2024">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-user-doctor" style="color: var(--accent);"></i> Doctor Name</label>
+                            <input type="text" id="doctorName" class="form-input" placeholder="e.g. Dr. Smith">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-hospital" style="color: var(--accent);"></i> Hospital / Clinic</label>
+                            <input type="text" id="hospitalName" class="form-input" placeholder="e.g. City Hospital">
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label>Patient Name</label>
-                        <input type="text" id="patientName" class="form-input" placeholder="e.g. John Doe">
+                        <label><i class="fa-solid fa-capsules" style="color: var(--success);"></i> Medicine / Drug Name</label>
+                        <input type="text" id="medicine" class="form-input" placeholder="e.g. Amoxicillin 500mg">
                     </div>
                     <div class="form-group">
-                        <label>Date of Prescription</label>
-                        <input type="text" id="date" class="form-input" placeholder="e.g. 12/05/2024">
-                    </div>
-                    <div class="form-group">
-                        <label>Medicine / Drug Name</label>
-                        <input type="text" id="medicine" class="form-input" placeholder="e.g. Amoxicillin">
-                    </div>
-                    <div class="form-group">
-                        <label>Dosage & Instructions</label>
-                        <input type="text" id="dosage" class="form-input" placeholder="e.g. 500mg, Twice daily">
+                        <label><i class="fa-solid fa-syringe" style="color: var(--warning);"></i> Dosage & Frequency</label>
+                        <input type="text" id="dosage" class="form-input" placeholder="e.g. 1-0-1, 5 days">
                     </div>
                     
                     <div style="display: flex; gap: 16px; margin-top: 32px;">

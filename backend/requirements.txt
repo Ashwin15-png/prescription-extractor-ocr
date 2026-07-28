@@ -9,3 +9,8 @@ streamlit
 requests
 psycopg2-binary
 python-dotenv
+openpyxl
+fpdf2
+reportlab
+pytest
+httpx

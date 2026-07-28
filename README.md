@@ -1,64 +1,144 @@
-# 🏥 Prescription Extractor - AI Powered Healthcare OCR
+# 🩺 Prescription Extractor SaaS (PrescriptionX)
 
-A premium, production-grade healthcare platform designed to digitize handwritten prescriptions using advanced AI-powered OCR. This project transforms messy medical paperwork into structured, searchable digital records with a stunning, modern UI.
+[![CI/CD Pipeline](https://github.com/ashwinkumar/prescription-extractor/actions/workflows/ci.yml/badge.svg)](https://github.com/ashwinkumar/prescription-extractor/actions/workflows/ci.yml)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/Database-Neon_PostgreSQL-4169E1?logo=postgresql)](https://neon.tech/)
+[![Tesseract OCR](https://img.shields.io/badge/OCR-Tesseract_5.0-blue?logo=google)](https://github.com/tesseract-ocr/tesseract)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-> [!TIP]
-> **[Check the Verification Guide](./Verification_Guide.md)** to learn how to test the database and live website.
-
-## ✨ Premium Features
-
-- **🎨 Modern SaaS Aesthetic:** A high-end interface featuring glassmorphism, electric indigo gradients, and smooth micro-animations.
-- **🧠 AI-Powered OCR:** Real-time text extraction using Tesseract OCR, with automatic identification of patient names, dates, medicines, and dosages.
-- **📂 Interactive Dashboard:** A comprehensive analytics-style dashboard to manage medical records, complete with search, filtering, and CSV export.
-- **⚡ Smart Workflow:** Drag-and-drop upload functionality with real-time processing animations and instant validation badges.
-- **📱 Responsive Design:** Fully optimized for desktop, tablet, and mobile devices.
-
-## 🏗️ Tech Stack
-
-- **Backend:** FastAPI (Python), PostgreSQL, SQLAlchemy
-- **OCR Engine:** Tesseract OCR, OpenCV
-- **Frontend:** Premium Vanilla HTML/CSS/JS (No frameworks, lightweight)
-- **Design System:** Glassmorphism, Google Fonts (Outfit, Inter, Poppins)
-- **Database:** PostgreSQL (Hosted on Neon or Local)
-
-## ⚙️ Prerequisites
-
-1. **Python 3.8+**
-2. **PostgreSQL:** A running instance (Local or Neon.tech).
-3. **Tesseract-OCR:** Required for text extraction.
-   - Install to: `C:\Program Files\Tesseract-OCR\tesseract.exe` (Windows default)
-4. **Environment Variables:** Create a `.env` file in the `backend/` directory:
-   ```env
-   DATABASE_URL=postgresql://user:password@localhost/dbname
-   ```
-
-## 🚀 Setup & Run Instructions
-
-### 1. Install Dependencies
-```bash
-pip install -r backend/requirements.txt
-```
-
-### 2. Database Initialization
-Populate the database with sample records to see the dashboard in action:
-```bash
-python seed_data.py
-```
-
-### 3. Run the Application
-```bash
-cd backend
-python run.py
-```
-The application will be live at **`http://localhost:8000`**.
-
-## 📂 Project Structure
-
-- `backend/`: FastAPI core, PostgreSQL models, and OCR logic.
-- `frontend/web/`: Premium UI assets (HTML, CSS, JS).
-- `uploads/`: Temporary storage for processed images.
-- `seed_data.py`: Database initialization script.
+**Prescription Extractor SaaS** is an enterprise-ready, AI-powered healthcare digital transformation platform. It automates medical prescription processing by utilizing advanced **OpenCV preprocessing**, **Tesseract OCR text extraction**, and **regex-based medical field parsing**.
 
 ---
 
-*Developed with ❤️ for the Healthcare Community.*
+## 🌟 Key Features
+
+* **⚡ Real-Time Prescription OCR**: Converts scanned or photographed prescription images into clean raw text.
+* **🎯 Smart Medical Data Extraction**: Automatically extracts Patient Name, Doctor Name, Hospital Name, Prescription Date, Prescribed Medicine, and Dosage/Frequency.
+* **📊 Modern SaaS Dashboard**: View, filter, search, sort, and manage all extracted patient medical records.
+* **🔍 Search Suggestions & Duplicate Detection**: Autocomplete search and warning alerts for potential duplicate prescriptions.
+* **📈 Comprehensive Analytics Engine**: Interactive Chart.js visual analytics for medicine distribution, dosage frequency, confidence score, and upload trends.
+* **📄 Multi-Format Enterprise Exports**: One-click exports to CSV, formatted Excel (`.xlsx`), and PDF Reports (`.pdf`), plus printable layouts.
+* **🔒 Enterprise Security**: Strict file validation, CORS configuration, SQL parameterization via SQLAlchemy, and security header middleware (`X-Frame-Options`, `X-XSS-Protection`).
+* **🐳 Containerized DevOps Stack**: Production Docker container and Docker Compose setup with health checks.
+
+---
+
+## 📐 System Architecture
+
+```mermaid
+graph TD
+    A[Client Web App - Vanilla HTML/CSS/JS] -->|Image Upload| B[FastAPI Gateway]
+    B -->|Preprocessing| C[OpenCV Pipeline]
+    C -->|Bilateral Denoise & Adaptive Thresh| D[Tesseract OCR Engine]
+    D -->|Raw Text| E[Field Extractor Heuristics]
+    E -->|Structured Data| F[Neon PostgreSQL / SQLite DB]
+    B -->|CSV / Excel / PDF| A
+```
+
+---
+
+## 📁 Repository Directory Structure
+
+```
+prescription-extractor/
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py            # FastAPI entry point & exception handlers
+│   │   ├── config.py          # Centralized environment settings
+│   │   ├── logger.py          # Structured JSON & console logger
+│   │   ├── database.py        # SQLAlchemy engine & auto-migration helper
+│   │   ├── models.py          # SQLAlchemy Prescription database schema
+│   │   ├── schemas.py         # Pydantic request/response schemas
+│   │   ├── routes.py          # API endpoints (Upload, Save, Export, Analytics)
+│   │   ├── ocr.py             # OpenCV preprocessing & Tesseract OCR pipeline
+│   │   └── extractor.py       # Regex & pattern extraction heuristics
+│   └── requirements.txt       # Python dependencies
+├── frontend/
+│   └── web/
+│       ├── index.html         # SaaS Landing page
+│       ├── upload.html        # OCR Upload & Field Correction page
+│       ├── dashboard.html     # Patient Records Management Dashboard
+│       ├── analytics.html     # Visual Analytics Dashboard
+│       ├── css/
+│       │   └── style.css      # Modern Glassmorphic Design System
+│       └── js/
+│           ├── app.js         # Upload & Dashboard interaction logic
+│           └── analytics.js   # Chart.js analytics logic
+├── tests/                     # Pytest suite
+│   ├── test_api.py            # API endpoint unit tests
+│   └── test_extractor.py      # Field extraction unit tests
+├── seed_data.py               # Database populator script
+├── Dockerfile                 # Multi-stage production container
+├── docker-compose.yml         # Container orchestration
+├── render.yaml                # Render platform deployment manifest
+├── vercel.json                # Vercel static deployment manifest
+├── .env.example               # Environment variables template
+└── README.md                  # Project documentation
+```
+
+---
+
+## 🚀 Quick Start Guide
+
+### Prerequisites
+* Python 3.12+
+* Tesseract-OCR Engine installed on host machine ([Download Tesseract](https://github.com/UB-Mannheim/tesseract/wiki))
+
+### 1. Local Setup
+```bash
+# Clone the repository
+git clone https://github.com/ashwinkumar/prescription-extractor.git
+cd prescription-extractor
+
+# Create virtual environment
+python -m venv venv
+venv\Scripts\activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r backend/requirements.txt
+
+# Populate sample data
+python seed_data.py
+
+# Launch FastAPI Dev Server
+uvicorn backend.app.main:app --reload --port 8000
+```
+Open [http://localhost:8000](http://localhost:8000) in your browser.
+
+---
+
+## 🧪 Running Automated Tests
+
+```bash
+pytest --verbose
+```
+
+---
+
+## 🐳 Docker Deployment
+
+```bash
+docker-compose up --build -d
+```
+Access the application at `http://localhost:8000`.
+
+---
+
+## 📜 API Documentation
+
+Interactive Swagger documentation is available at `/docs` when the backend is running.
+
+* `GET /health` - System health check
+* `POST /upload` - Process prescription image with OCR
+* `POST /save` - Persist prescription record
+* `GET /prescriptions` - List, filter, search records
+* `GET /analytics` - Summary stats and trends
+* `GET /export-csv` - Export CSV dataset
+* `GET /api/v1/export/excel` - Export formatted Excel spreadsheet
+* `GET /api/v1/export/pdf` - Export PDF Report
+
+---
+
+## 📄 License
+This project is licensed under the [MIT License](LICENSE).

@@ -1,19 +1,35 @@
 # Python
 __pycache__/
-*.pyc
-.venv/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
 
-# Environment
-.env
-
-# Uploads
-uploads/
-
-# Database
+# Database & Uploads
 *.db
+*.sqlite3
+uploads/*
+!uploads/.gitkeep
 
-# VS Code
+# Environment & Secrets
+.env
+.env.local
+.env.production
+
+# IDE & OS
+.idea/
 .vscode/
-
-# OS
 .DS_Store
+Thumbs.db
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
