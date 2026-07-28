@@ -7,7 +7,7 @@
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             return "http://127.0.0.1:8000";
         }
-        return "https://prescription-extractor-api.onrender.com";
+        return "https://prescription-extractor-ocr.onrender.com";
     })();
 
 
