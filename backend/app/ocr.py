@@ -5,7 +5,7 @@ import os
 from typing import Tuple, Dict, Any
 from .config import settings
 from .logger import logger
-from .utils import calculate_blur_score
+
 
 # Configure tesseract executable path if specified and exists
 if os.path.exists(settings.TESSERACT_CMD):
