@@ -5,7 +5,7 @@ from typing import List, Optional
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Query, status
 from fastapi.responses import StreamingResponse, Response, JSONResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, text
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from fpdf import FPDF
@@ -16,7 +16,7 @@ from .schemas import (
     OCRUploadResponse, ExtractedFields, PrescriptionCreate, PrescriptionResponse,
     SuggestionsResponse, UserCreate, UserResponse, Token
 )
-from .ocr import perform_ocr, get_ocr_confidence, detect_document_type
+from .ocr import perform_ocr, analyze_image_quality, detect_document_type
 from .extractor import extract_fields
 from .config import settings
 from .logger import logger
@@ -26,16 +26,15 @@ router = APIRouter()
 
 # ── 1. Upload & OCR Endpoint ──────────────────────────────────────────────
 @router.post("/upload", response_model=OCRUploadResponse)
-async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_prescription(file: UploadFile = File(...), db: Session = Depends(get_db)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file selected.")
 
     # Validate file extension
     ext = os.path.splitext(file.filename)[1].lower()
     allowed_exts = [".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff"]
-async def upload_prescription(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File must be an image.")
+    if ext not in allowed_exts and not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File type not supported or file must be an image.")
 
     contents = await file.read()
     if len(contents) > 10 * 1024 * 1024:
@@ -138,9 +137,17 @@ async def save_prescription(data: PrescriptionCreate, db: Session = Depends(get_
             qr_code_data=data.qr_code_data,
             
             raw_text=data.raw_text,
+            ocr_clean_text=data.ocr_clean_text,
             confidence_score=data.confidence_score or 90,
             image_quality_score=data.image_quality_score or 100,
-            blur_detected=data.blur_detected or False
+            blur_score=data.blur_score or 0,
+            blur_detected=data.blur_detected or False,
+            qr_code=data.qr_code,
+            latitude=data.latitude,
+            longitude=data.longitude,
+            country=data.country or "India",
+            state=data.state,
+            city=data.city
         )
         db.add(new_prescription)
         db.commit()
@@ -160,22 +167,193 @@ async def get_prescriptions(
     patient: Optional[str] = Query(None, description="Filter by patient name"),
     medicine: Optional[str] = Query(None, description="Filter by medicine name"),
     date: Optional[str] = Query(None, description="Filter by date"),
+    doctor: Optional[str] = Query(None, description="Filter by doctor name"),
+    hospital: Optional[str] = Query(None, description="Filter by hospital name"),
+    search: Optional[str] = Query(None, description="Global search term"),
+    sort_by: Optional[str] = Query(None, description="Sorting parameter, e.g. patient_name_asc, date_desc"),
     db: Session = Depends(get_db)
 ):
     try:
         query = db.query(Prescription)
+        
+        # ── Global search ──
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(
+                or_(
+                    Prescription.patient_name.ilike(search_term),
+                    Prescription.medicine.ilike(search_term),
+                    Prescription.doctor_name.ilike(search_term),
+                    Prescription.hospital_name.ilike(search_term),
+                    Prescription.diagnosis.ilike(search_term),
+                    Prescription.symptoms.ilike(search_term),
+                    Prescription.department.ilike(search_term),
+                    Prescription.raw_text.ilike(search_term)
+                )
+            )
+            
+        # ── Filters ──
         if patient:
             query = query.filter(Prescription.patient_name.ilike(f"%{patient}%"))
         if medicine:
             query = query.filter(Prescription.medicine.ilike(f"%{medicine}%"))
         if date:
-            query = query.filter(Prescription.date == date)
+            query = query.filter(Prescription.date.ilike(f"%{date}%"))
+        if doctor:
+            query = query.filter(Prescription.doctor_name.ilike(f"%{doctor}%"))
+        if hospital:
+            query = query.filter(Prescription.hospital_name.ilike(f"%{hospital}%"))
             
-        results = query.order_by(Prescription.id.desc()).all()
+        # ── Multi-column Sorting ──
+        if sort_by:
+            sort_clauses = []
+            parts = [p.strip() for p in sort_by.split(",") if p.strip()]
+            for part in parts:
+                direction = "desc"
+                field_name = part
+                if part.endswith("_asc"):
+                    direction = "asc"
+                    field_name = part[:-4]
+                elif part.endswith("_desc"):
+                    direction = "desc"
+                    field_name = part[:-5]
+                elif part.endswith(" asc"):
+                    direction = "asc"
+                    field_name = part[:-4]
+                elif part.endswith(" desc"):
+                    direction = "desc"
+                    field_name = part[:-5]
+                
+                col = None
+                if field_name in ["patient", "patient_name"]:
+                    col = Prescription.patient_name
+                elif field_name in ["medicine", "medicine_name"]:
+                    col = Prescription.medicine
+                elif field_name in ["date", "prescription_date"]:
+                    col = Prescription.date
+                elif field_name in ["created_at", "id"]:
+                    col = Prescription.id
+                elif field_name in ["doctor", "doctor_name"]:
+                    col = Prescription.doctor_name
+                elif field_name in ["hospital", "hospital_name"]:
+                    col = Prescription.hospital_name
+                elif field_name in ["confidence", "confidence_score", "accuracy", "ocr_accuracy"]:
+                    col = Prescription.confidence_score
+                elif field_name in ["image_quality", "quality"]:
+                    col = Prescription.image_quality_score
+                    
+                if col is not None:
+                    if direction == "asc":
+                        sort_clauses.append(col.asc())
+                    else:
+                        sort_clauses.append(col.desc())
+                        
+            if sort_clauses:
+                query = query.order_by(*sort_clauses)
+            else:
+                query = query.order_by(Prescription.id.desc())
+        else:
+            query = query.order_by(Prescription.id.desc())
+            
+        results = query.all()
         return results
     except Exception as e:
         logger.error(f"Error fetching prescriptions: {e}")
         raise HTTPException(status_code=500, detail="Error retrieving records from database.")
+
+# Aliases for get_prescriptions and custom endpoints
+@router.get("/records", response_model=List[PrescriptionResponse])
+async def get_records(
+    patient: Optional[str] = Query(None),
+    medicine: Optional[str] = Query(None),
+    date: Optional[str] = Query(None),
+    doctor: Optional[str] = Query(None),
+    hospital: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    sort_by: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    return await get_prescriptions(patient, medicine, date, doctor, hospital, search, sort_by, db)
+
+@router.get("/search", response_model=List[PrescriptionResponse])
+async def search_records(
+    patient: Optional[str] = Query(None),
+    medicine: Optional[str] = Query(None),
+    date: Optional[str] = Query(None),
+    doctor: Optional[str] = Query(None),
+    hospital: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    sort_by: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    return await get_prescriptions(patient, medicine, date, doctor, hospital, search, sort_by, db)
+
+@router.get("/sort", response_model=List[PrescriptionResponse])
+async def sort_records(
+    patient: Optional[str] = Query(None),
+    medicine: Optional[str] = Query(None),
+    date: Optional[str] = Query(None),
+    doctor: Optional[str] = Query(None),
+    hospital: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    sort_by: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    return await get_prescriptions(patient, medicine, date, doctor, hospital, search, sort_by, db)
+
+@router.get("/filter", response_model=List[PrescriptionResponse])
+async def filter_records(
+    patient: Optional[str] = Query(None),
+    medicine: Optional[str] = Query(None),
+    date: Optional[str] = Query(None),
+    doctor: Optional[str] = Query(None),
+    hospital: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    sort_by: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    return await get_prescriptions(patient, medicine, date, doctor, hospital, search, sort_by, db)
+
+@router.post("/extract", response_model=OCRUploadResponse)
+async def extract_prescription_fields(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    return await upload_prescription(file, db)
+
+@router.get("/status")
+async def get_status(db: Session = Depends(get_db)):
+    db_status = "unhealthy"
+    try:
+        db.execute(text("SELECT 1"))
+        db_status = "connected"
+    except Exception as e:
+        logger.error(f"Status DB health check failed: {e}")
+        
+    tess_available = False
+    try:
+        import pytesseract
+        pytesseract.get_tesseract_version()
+        tess_available = True
+    except Exception:
+        pass
+        
+    return {
+        "status": "online",
+        "database": db_status,
+        "tesseract_installed": tess_available,
+        "uploads_dir_exists": os.path.exists("uploads")
+    }
+
+@router.get("/health")
+async def health_check_route(db: Session = Depends(get_db)):
+    db_status = "unhealthy"
+    try:
+        db.execute(text("SELECT 1"))
+        db_status = "connected"
+    except Exception as e:
+        logger.error(f"Health check DB ping failed: {e}")
+    return {
+        "status": "healthy" if db_status == "connected" else "degraded",
+        "database": db_status
+    }
 
 @router.delete("/prescriptions/{record_id}")
 async def delete_prescription(record_id: int, db: Session = Depends(get_db)):
@@ -406,3 +584,25 @@ async def get_me(current_user: Optional[User] = Depends(get_current_user)):
     if not current_user:
         raise HTTPException(status_code=401, detail="Not authenticated.")
     return current_user
+
+# ── 10. Seeding Endpoints ──────────────────────────────────────────────────
+@router.post("/seed")
+async def run_seed(db: Session = Depends(get_db)):
+    from .seeder import seed_data_logic
+    try:
+        count = seed_data_logic(db)
+        if count == 0:
+            return {"message": "Database is not empty. Seeding skipped.", "inserted": 0}
+        return {"message": f"Seeding successful! Inserted {count} prescriptions.", "inserted": count}
+    except Exception as e:
+        logger.error(f"Seeding error: {e}")
+        raise HTTPException(status_code=500, detail=f"Seeding failed: {str(e)}")
+
+@router.get("/seed/status")
+async def get_seed_status(db: Session = Depends(get_db)):
+    count = db.query(Prescription).count()
+    return {
+        "is_seeded": count >= 150,
+        "record_count": count,
+        "status": "seeded" if count > 0 else "empty"
+    }

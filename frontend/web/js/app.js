@@ -1,3 +1,4 @@
+(function() {
 const API_BASE = (function() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('api')) {
@@ -14,6 +15,8 @@ const API_BASE = (function() {
     }
     return "https://prescription-extractor-ocr.onrender.com";
 })();
+
+window.API_BASE = API_BASE;
 
 // --- Toast System ---
 function showToast(message, type = 'info') {
@@ -41,6 +44,8 @@ function showToast(message, type = 'info') {
         setTimeout(() => toast.remove(), 300);
     }, 4000);
 }
+
+window.showToast = showToast;
 
 // --- Navigation & Dashboard Logic ---
 const recordsBody = document.getElementById('recordsBody');
@@ -564,3 +569,4 @@ document.addEventListener('keydown', (e) => {
 if (recordsBody) {
     fetchPrescriptions();
 }
+})();

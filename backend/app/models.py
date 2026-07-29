@@ -38,9 +38,19 @@ class Prescription(Base):
     
     # OCR Engine Audit Metrics
     raw_text = Column(Text, nullable=True)
+    ocr_clean_text = Column(Text, nullable=True)
     confidence_score = Column(Integer, nullable=True, default=0)
     image_quality_score = Column(Integer, nullable=True, default=100)
+    blur_score = Column(Integer, nullable=True, default=0)
     blur_detected = Column(Boolean, nullable=True, default=False)
+    qr_code = Column(Text, nullable=True)
+    
+    # Location Metadata
+    latitude = Column(String(50), nullable=True)
+    longitude = Column(String(50), nullable=True)
+    country = Column(String(100), nullable=True, default="India")
+    state = Column(String(100), nullable=True)
+    city = Column(String(100), nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -78,9 +88,17 @@ class Prescription(Base):
             "qr_code_data": self.qr_code_data or "",
             
             "raw_text": self.raw_text or "",
+            "ocr_clean_text": self.ocr_clean_text or "",
             "confidence_score": self.confidence_score or 0,
             "image_quality_score": self.image_quality_score or 100,
+            "blur_score": self.blur_score or 0,
             "blur_detected": self.blur_detected or False,
+            "qr_code": self.qr_code or "",
+            "latitude": self.latitude or "",
+            "longitude": self.longitude or "",
+            "country": self.country or "India",
+            "state": self.state or "",
+            "city": self.city or "",
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
 

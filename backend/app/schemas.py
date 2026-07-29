@@ -61,9 +61,17 @@ class PrescriptionCreate(BaseModel):
     qr_code_data: Optional[str] = ""
 
     raw_text: Optional[str] = ""
+    ocr_clean_text: Optional[str] = ""
     confidence_score: Optional[int] = 0
     image_quality_score: Optional[int] = 100
+    blur_score: Optional[int] = 0
     blur_detected: Optional[bool] = False
+    qr_code: Optional[str] = ""
+    latitude: Optional[str] = ""
+    longitude: Optional[str] = ""
+    country: Optional[str] = "India"
+    state: Optional[str] = ""
+    city: Optional[str] = ""
 
 class PrescriptionResponse(BaseModel):
     id: int
@@ -92,9 +100,17 @@ class PrescriptionResponse(BaseModel):
     qr_code_data: Optional[str] = ""
 
     raw_text: Optional[str] = ""
+    ocr_clean_text: Optional[str] = ""
     confidence_score: Optional[int] = 0
     image_quality_score: Optional[int] = 100
+    blur_score: Optional[int] = 0
     blur_detected: Optional[bool] = False
+    qr_code: Optional[str] = ""
+    latitude: Optional[str] = ""
+    longitude: Optional[str] = ""
+    country: Optional[str] = "India"
+    state: Optional[str] = ""
+    city: Optional[str] = ""
     created_at: Optional[Any] = None
 
     model_config = ConfigDict(from_attributes=True)

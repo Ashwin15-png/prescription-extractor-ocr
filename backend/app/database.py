@@ -81,6 +81,14 @@ def auto_migrate():
                     if field not in columns:
                         conn.execute(text(f"ALTER TABLE prescriptions ADD COLUMN {field} {t} DEFAULT NULL"))
 
+                # OCR Engine Audit & Location Columns
+                for field, t in [("ocr_clean_text", "TEXT"), ("blur_score", "INTEGER"),
+                                 ("qr_code", "TEXT"), ("latitude", "VARCHAR"),
+                                 ("longitude", "VARCHAR"), ("country", "VARCHAR"),
+                                 ("state", "VARCHAR"), ("city", "VARCHAR")]:
+                    if field not in columns:
+                        conn.execute(text(f"ALTER TABLE prescriptions ADD COLUMN {field} {t} DEFAULT NULL"))
+
                 if "image_quality_score" not in columns:
                     conn.execute(text("ALTER TABLE prescriptions ADD COLUMN image_quality_score INTEGER DEFAULT 100"))
                 if "blur_detected" not in columns:
