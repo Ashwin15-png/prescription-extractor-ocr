@@ -39,7 +39,7 @@ class Prescription(Base):
     # OCR Engine Audit Metrics
     raw_text = Column(Text, nullable=True)
     ocr_clean_text = Column(Text, nullable=True)
-    confidence_score = Column(Integer, nullable=True, default=0)
+    confidence_score = Column(Integer, nullable=True, default=0, index=True)
     image_quality_score = Column(Integer, nullable=True, default=100)
     blur_score = Column(Integer, nullable=True, default=0)
     blur_detected = Column(Boolean, nullable=True, default=False)
@@ -62,7 +62,7 @@ class Prescription(Base):
     language = Column(String(50), nullable=True, default="English")
     barcode = Column(String(100), nullable=True)
     is_handwritten = Column(Boolean, nullable=True, default=False)
-    medicine_category = Column(String(100), nullable=True)
+    medicine_category = Column(String(100), nullable=True, index=True)
     doctor_specialty = Column(String(150), nullable=True)
     hospital_type = Column(String(100), nullable=True)
     is_emergency = Column(Boolean, nullable=True, default=False)

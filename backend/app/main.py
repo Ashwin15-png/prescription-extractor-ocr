@@ -1,5 +1,6 @@
 import os
 import time
+import traceback
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -13,37 +14,27 @@ from .database import engine, auto_migrate, get_db
 from .routes import router
 from .logger import logger
 
+# ── Startup / Shutdown ────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Application Startup
     logger.info("Initializing Prescription Extractor SaaS API...")
     auto_migrate()
+    logger.info("API ready.")
     yield
-    # Application Shutdown
     logger.info("Shutting down Prescription Extractor SaaS API...")
 
+
+# ── App instance ──────────────────────────────────────────────────────────────
 app = FastAPI(
     title="Prescription Extractor SaaS API",
     description="Enterprise-Grade Healthcare OCR & Prescription Data Extraction Platform",
     version=settings.VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
-# Global Security Headers Middleware
-@app.middleware("http")
-async def add_security_headers(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    process_time = time.time() - start_time
-    response.headers["X-Process-Time"] = f"{process_time:.4f}s"
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    return response
-
-# Universal CORS Middleware for Tandem Local & Vercel Deployments
+# ── CORS (allow all for dev; also allows *.vercel.app) ───────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -51,29 +42,60 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Total-Count", "X-Process-Time"],
 )
 
-# Exception Handlers
+# ── Security + Timing Middleware ──────────────────────────────────────────────
+@app.middleware("http")
+async def add_security_and_timing_headers(request: Request, call_next):
+    start = time.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        # Last-resort safety net — should normally be caught at handler level
+        logger.error(f"Unhandled middleware exception: {exc}\n{traceback.format_exc()}")
+        response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": "Internal server error.", "details": str(exc)},
+        )
+    elapsed = time.perf_counter() - start
+    response.headers["X-Process-Time"]       = f"{elapsed:.4f}s"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"]       = "DENY"
+    response.headers["X-XSS-Protection"]      = "1; mode=block"
+    if elapsed > 5:
+        logger.warning(f"Slow request: {request.method} {request.url.path} took {elapsed:.2f}s")
+    return response
+
+# ── Exception Handlers ────────────────────────────────────────────────────────
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Return JSON — never HTML — for HTTP errors."""
     return JSONResponse(
         status_code=exc.status_code,
-        content={"detail": exc.detail, "status_code": exc.status_code}
+        content={"success": False, "error": exc.detail, "status_code": exc.status_code},
     )
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Global unhandled exception: {exc}")
+    """Catch-all so the frontend always gets JSON, never a raw traceback page."""
+    logger.error(f"Unhandled exception on {request.method} {request.url}: {exc}\n{traceback.format_exc()}")
     return JSONResponse(
         status_code=500,
-        content={"detail": "An internal server error occurred.", "status_code": 500}
+        content={
+            "success": False,
+            "error": "An internal server error occurred.",
+            "details": str(exc),
+        },
     )
 
-# Include API Router
+# ── Router ────────────────────────────────────────────────────────────────────
 app.include_router(router)
 
-# Serve Frontend Static Files
-static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../frontend/web"))
+# ── Static frontend ───────────────────────────────────────────────────────────
+static_dir = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../../frontend/web")
+)
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir, html=True), name="static")
 
@@ -81,7 +103,7 @@ if os.path.exists(static_dir):
     async def root():
         return RedirectResponse(url="/static/index.html")
 
-# Production Health Check Endpoint
+# ── Health check ──────────────────────────────────────────────────────────────
 @app.get("/health", tags=["Health"])
 async def health_check():
     db_status = "unhealthy"
@@ -89,12 +111,12 @@ async def health_check():
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         db_status = "connected"
-    except Exception as e:
-        logger.error(f"Health check DB ping failed: {e}")
+    except Exception as exc:
+        logger.error(f"Health check DB ping failed: {exc}")
 
     return {
         "status": "healthy" if db_status == "connected" else "degraded",
         "database": db_status,
         "environment": settings.ENV,
-        "version": settings.VERSION
+        "version": settings.VERSION,
     }

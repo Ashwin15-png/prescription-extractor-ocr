@@ -59,6 +59,8 @@ let currentLimit = 15;
 let currentSort = "";
 let currentSearch = "";
 
+let currentFetchController = null;
+
 const fetchPrescriptions = async (retryCount = 0) => {
     if (!recordsBody) return;
 
@@ -76,11 +78,14 @@ const fetchPrescriptions = async (retryCount = 0) => {
     qs.append('limit', currentLimit);
 
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        if (currentFetchController) {
+            currentFetchController.abort();
+        }
+        currentFetchController = new AbortController();
+        const timeoutId = setTimeout(() => currentFetchController.abort(), 12000);
 
         const response = await fetch(`${API_BASE}/prescriptions?${qs.toString()}`, {
-            signal: controller.signal
+            signal: currentFetchController.signal
         });
         clearTimeout(timeoutId);
 
@@ -656,7 +661,25 @@ if (saveBtn) {
 
             if (response.ok) {
                 showToast("Prescription saved successfully!", "success");
-                setTimeout(() => window.location.href = 'dashboard.html', 1500);
+                
+                // Auto Sync Data instead of reloading
+                currentPage = 1;
+                fetchPrescriptions();
+                
+                // Reset Upload UI
+                document.getElementById('rawText').value = '';
+                document.getElementById('patientName').value = '';
+                document.getElementById('medicine').value = '';
+                document.getElementById('dosage').value = '';
+                document.getElementById('date').value = '';
+                if (document.getElementById('doctorName')) document.getElementById('doctorName').value = '';
+                if (document.getElementById('hospitalName')) document.getElementById('hospitalName').value = '';
+                
+                document.getElementById('resultSection').classList.add('hidden');
+                document.getElementById('uploadStep').classList.remove('hidden');
+                
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Confirm & Save';
             } else {
                 const data = await response.json();
                 showToast(data.error || "Error saving to database.", "error");

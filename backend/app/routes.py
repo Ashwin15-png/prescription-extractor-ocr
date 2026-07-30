@@ -18,7 +18,8 @@ from .schemas import (
     OCRUploadResponse, ExtractedFields, PrescriptionCreate, PrescriptionResponse,
     SuggestionsResponse, UserCreate, UserResponse, Token
 )
-from .ocr import perform_ocr, analyze_image_quality, detect_document_type
+from starlette.concurrency import run_in_threadpool
+from .ocr import perform_ocr, analyze_image_quality, detect_document_type, process_and_analyze_image
 from .extractor import extract_fields
 from .config import settings
 from .logger import logger
@@ -232,12 +233,9 @@ async def upload_prescription(file: UploadFile = File(...), db: Session = Depend
         f.write(contents)
 
     try:
-        raw_text = perform_ocr(temp_path)
-        extracted = extract_fields(raw_text)
+        raw_text, analysis = await run_in_threadpool(process_and_analyze_image, temp_path)
+        extracted = await run_in_threadpool(extract_fields, raw_text)
         doc_type = detect_document_type(raw_text)
-        
-        # Enterprise Document Analysis
-        analysis = analyze_image_quality(temp_path)
 
         is_duplicate = False
         if extracted.get("patient_name") != "Unknown" and extracted.get("medicine") != "Not Found":
@@ -298,8 +296,15 @@ async def upload_prescription(file: UploadFile = File(...), db: Session = Depend
         return response_data
 
     except Exception as e:
-        logger.error(f"Error during file processing: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal OCR error: {str(e)}")
+        logger.error(f"Error during file processing: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": "Failed to Fetch / Internal Server Error",
+                "details": str(e)
+            }
+        )
     finally:
         if os.path.exists(temp_path):
             try: os.remove(temp_path)
