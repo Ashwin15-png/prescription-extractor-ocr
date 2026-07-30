@@ -100,22 +100,30 @@
                 <input type="text" id="searchInput" placeholder="Search by patient name, doctor or medicine..." autocomplete="off">
                 <div id="searchSuggestions" class="suggestions-dropdown hidden"></div>
             </div>
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
                 <input type="text" id="medicineFilter" class="form-input" placeholder="Filter by medicine" style="width: 180px; padding: 10px 14px;">
                 <input type="text" id="dateFilter" class="form-input" placeholder="Filter by date" style="width: 150px; padding: 10px 14px;">
-                <select id="sortSelect" class="form-input" style="width: auto; padding: 10px 14px;">
+                <select id="sortSelect" class="form-input" style="width: auto; padding: 10px 14px; background-color: white;">
                     <option value="">Sort by...</option>
-                    <option value="name_asc">Name A→Z</option>
-                    <option value="name_desc">Name Z→A</option>
+                    <option value="patient_name_asc">Name A→Z</option>
+                    <option value="patient_name_desc">Name Z→A</option>
                     <option value="medicine_asc">Medicine A→Z</option>
+                    <option value="medicine_desc">Medicine Z→A</option>
                     <option value="id_desc">Newest First</option>
                     <option value="id_asc">Oldest First</option>
+                    <option value="confidence_desc">High Confidence</option>
+                    <option value="confidence_asc">Low Confidence</option>
+                    <option value="image_quality_desc">High Quality</option>
+                    <option value="image_quality_asc">Low Quality</option>
                 </select>
+                <button id="toggleFiltersBtn" class="btn btn-outline" style="padding: 10px 16px;">
+                    <i class="fa-solid fa-sliders"></i> Advanced Filters
+                </button>
                 <button id="applyFilters" class="btn btn-primary" style="padding: 10px 20px;">
-                    <i class="fa-solid fa-filter"></i> Filter
+                    <i class="fa-solid fa-filter"></i> Apply
                 </button>
                 <button id="clearFilters" class="btn btn-outline" style="padding: 10px 16px;">
-                    Clear
+                    Reset
                 </button>
             </div>
         </div>
@@ -147,6 +155,13 @@
                     </tr>
                 </tbody>
             </table>
+
+            <div id="paginationContainer" style="display:flex; justify-content:space-between; align-items:center; padding: 18px 24px; border-top: 1px solid rgba(0,0,0,0.05); flex-wrap: wrap; gap: 12px;">
+                <div style="font-size: 0.85rem; color: var(--text-secondary);" id="paginationInfo">
+                    Showing 0 to 0 of 0 records
+                </div>
+                <div style="display: flex; gap: 6px;" id="paginationControls"></div>
+            </div>
             
             <div id="emptyState" class="hidden" style="text-align: center; padding: 80px 0;">
                 <div style="font-size: 4rem; color: var(--text-muted); opacity: 0.3; margin-bottom: 24px;">
@@ -163,14 +178,16 @@
 
     <!-- ── View Details Modal ─────────────────────────────────────────── -->
     <div id="detailsModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <div class="modal-box glass-card fade-in">
+        <div class="modal-box glass-card fade-in" style="max-width: 800px; width: 90%;">
             <div class="modal-header">
-                <h3 id="modalTitle"><i class="fa-solid fa-file-medical" style="color:var(--primary);"></i> Prescription Details</h3>
+                <h3 id="modalTitle"><i class="fa-solid fa-file-medical" style="color:var(--primary);"></i> Enterprise Patient & OCR Diagnostics</h3>
                 <button class="btn btn-ghost modal-close" id="closeDetailsModal" aria-label="Close">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Main Fields Block -->
+                <h4 style="border-bottom: 2px solid rgba(99, 102, 241, 0.1); padding-bottom: 6px; margin: 16px 0 10px 0; color: var(--primary);">Clinical Information</h4>
                 <div class="modal-fields-grid">
                     <div class="modal-field">
                         <span class="modal-field-label"><i class="fa-solid fa-user"></i> Patient Name</span>
@@ -181,7 +198,11 @@
                         <span class="modal-field-value" id="mdMedicine">—</span>
                     </div>
                     <div class="modal-field">
-                        <span class="modal-field-label"><i class="fa-solid fa-syringe"></i> Dosage</span>
+                        <span class="modal-field-label"><i class="fa-solid fa-code-branch"></i> Generic Name</span>
+                        <span class="modal-field-value" id="mdGenericName">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-syringe"></i> Dosage & Frequency</span>
                         <span class="modal-field-value" id="mdDosage">—</span>
                     </div>
                     <div class="modal-field">
@@ -189,22 +210,253 @@
                         <span class="modal-field-value" id="mdDate">—</span>
                     </div>
                     <div class="modal-field">
-                        <span class="modal-field-label"><i class="fa-solid fa-user-doctor"></i> Doctor Name</span>
+                        <span class="modal-field-label"><i class="fa-solid fa-user-doctor"></i> Doctor Name (Specialty)</span>
                         <span class="modal-field-value" id="mdDoctorName">—</span>
                     </div>
                     <div class="modal-field">
-                        <span class="modal-field-label"><i class="fa-solid fa-hospital"></i> Hospital</span>
+                        <span class="modal-field-label"><i class="fa-solid fa-hospital"></i> Hospital (Type)</span>
                         <span class="modal-field-value" id="mdHospitalName">—</span>
                     </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-building-user"></i> Department</span>
+                        <span class="modal-field-value" id="mdDepartment">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-stethoscope"></i> Diagnosis</span>
+                        <span class="modal-field-value" id="mdDiagnosis">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-head-side-cough"></i> Symptoms</span>
+                        <span class="modal-field-value" id="mdSymptoms">—</span>
+                    </div>
                 </div>
-                <div class="modal-raw-section">
+
+                <!-- Demographic & Admin metrics -->
+                <h4 style="border-bottom: 2px solid rgba(99, 102, 241, 0.1); padding-bottom: 6px; margin: 24px 0 10px 0; color: var(--primary);">Clinical Classification & Demographics</h4>
+                <div class="modal-fields-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-venus-mars"></i> Gender / Age</span>
+                        <span class="modal-field-value" id="mdDemoGenderAge">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-layer-group"></i> Doc Classification</span>
+                        <span class="modal-field-value" id="mdClassificationStatus">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-kit-medical"></i> Admission Status</span>
+                        <span class="modal-field-value" id="mdAdmissionStatus">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-file-invoice"></i> Specialty Category</span>
+                        <span class="modal-field-value" id="mdMedicineCategory">—</span>
+                    </div>
+                </div>
+
+                <!-- OCR Diagnostics Block -->
+                <h4 style="border-bottom: 2px solid rgba(99, 102, 241, 0.1); padding-bottom: 6px; margin: 24px 0 10px 0; color: var(--primary);">OCR & Quality Diagnostics</h4>
+                <div class="modal-fields-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-gauge-high"></i> Readability Score</span>
+                        <span class="modal-field-value" id="mdReadabilityScore">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-signature"></i> Writing Class</span>
+                        <span class="modal-field-value" id="mdWritingType">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-wave-square"></i> Noise Level</span>
+                        <span class="modal-field-value" id="mdNoiseLevel">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-glasses"></i> Contrast / Brightness</span>
+                        <span class="modal-field-value" id="mdContrastBrightness">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-compass"></i> Rotation & Skew</span>
+                        <span class="modal-field-value" id="mdRotationSkew">—</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="modal-field-label"><i class="fa-solid fa-language"></i> Language</span>
+                        <span class="modal-field-value" id="mdLanguage">—</span>
+                    </div>
+                </div>
+
+                <div class="modal-raw-section" style="margin-top: 24px;">
                     <span class="modal-field-label"><i class="fa-solid fa-align-left"></i> Raw OCR Text</span>
-                    <pre class="modal-raw-text" id="mdRawText"></pre>
+                    <pre class="modal-raw-text" id="mdRawText" style="max-height: 150px; overflow-y: auto; font-family:monospace; font-size: 0.82rem; background: rgba(0,0,0,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);"></pre>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" id="closeDetailsModalFooter">Close</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ── Advanced Filters Drawer ────────────────────────────────────── -->
+    <div id="filterDrawerOverlay" class="modal-overlay hidden" style="z-index: 999;"></div>
+    <div id="filterDrawer" class="filter-drawer">
+        <div class="filter-drawer-header">
+            <h3 style="font-size: 1.25rem;"><i class="fa-solid fa-sliders" style="color:var(--primary); margin-right: 6px;"></i> Advanced Filters</h3>
+            <button class="btn btn-ghost" id="closeFilterDrawer" aria-label="Close Drawer" style="font-size: 1.2rem; padding: 4px 8px; border-radius:50%;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="filter-drawer-body">
+            <!-- Basic Filters Group -->
+            <div class="filter-group">
+                <label>Clinical Entities</label>
+                <input type="text" id="filterPatientName" class="form-input" placeholder="Patient Name" style="width: 100%; margin-bottom: 8px; padding: 10px 14px;">
+                <input type="text" id="filterMedicineName" class="form-input" placeholder="Medicine Name" style="width: 100%; margin-bottom: 8px; padding: 10px 14px;">
+                <input type="text" id="filterGenericName" class="form-input" placeholder="Generic Name" style="width: 100%; margin-bottom: 8px; padding: 10px 14px;">
+                <input type="text" id="filterDiagnosis" class="form-input" placeholder="Diagnosis" style="width: 100%; margin-bottom: 8px; padding: 10px 14px;">
+                <input type="text" id="filterSymptoms" class="form-input" placeholder="Symptoms" style="width: 100%; margin-bottom: 8px; padding: 10px 14px;">
+            </div>
+
+            <!-- Health Facility Information -->
+            <div class="filter-group">
+                <label>Medical Provider</label>
+                <select id="filterDoctorName" class="form-input" style="width: 100%; margin-bottom: 8px; padding: 10px 14px; background-color: white;">
+                    <option value="">Select Doctor...</option>
+                </select>
+                <select id="filterHospitalName" class="form-input" style="width: 100%; margin-bottom: 8px; padding: 10px 14px; background-color: white;">
+                    <option value="">Select Hospital...</option>
+                </select>
+                <select id="filterDepartment" class="form-input" style="width: 100%; margin-bottom: 8px; padding: 10px 14px; background-color: white;">
+                    <option value="">Select Department...</option>
+                </select>
+                <select id="filterDoctorSpecialty" class="form-input" style="width: 100%; margin-bottom: 8px; padding: 10px 14px; background-color: white;">
+                    <option value="">Select Doctor Specialty...</option>
+                </select>
+                <select id="filterHospitalType" class="form-input" style="width: 100%; margin-bottom: 8px; padding: 10px 14px; background-color: white;">
+                    <option value="">Select Hospital Type...</option>
+                </select>
+                <select id="filterMedicineCategory" class="form-input" style="width: 100%; margin-bottom: 8px; padding: 10px 14px; background-color: white;">
+                    <option value="">Select Drug Category...</option>
+                </select>
+            </div>
+
+            <!-- Date Ranges -->
+            <div class="filter-group">
+                <label>Prescription Date Range</label>
+                <select id="filterDateRange" class="form-input" style="width: 100%; margin-bottom: 8px; padding: 10px 14px; background-color: white;">
+                    <option value="">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="yesterday">Yesterday</option>
+                    <option value="last_7_days">Last 7 Days</option>
+                    <option value="last_30_days">Last 30 Days</option>
+                    <option value="last_90_days">Last 90 Days</option>
+                    <option value="current_month">Current Month</option>
+                    <option value="previous_month">Previous Month</option>
+                    <option value="current_year">Current Year</option>
+                    <option value="financial_year">Financial Year</option>
+                    <option value="custom">Custom Range...</option>
+                </select>
+                <div id="customDateRangeInputs" class="range-inputs hidden" style="margin-top: 8px; gap: 8px; display: none;">
+                    <input type="date" id="filterDateStart" class="form-input" style="padding: 8px;" placeholder="Start Date">
+                    <span style="color:var(--text-muted); font-size:0.85rem;">to</span>
+                    <input type="date" id="filterDateEnd" class="form-input" style="padding: 8px;" placeholder="End Date">
+                </div>
+            </div>
+
+            <!-- Demographic Filters -->
+            <div class="filter-group">
+                <label>Demographics & Admin</label>
+                <select id="filterDocumentType" class="form-input" style="width: 100%; margin-bottom: 8px; padding: 10px 14px; background-color: white;">
+                    <option value="">Select Document Type...</option>
+                </select>
+                <div class="range-inputs" style="margin-bottom: 8px; gap:8px;">
+                    <input type="number" id="filterAgeMin" class="form-input" style="padding:10px 14px;" placeholder="Min Age" min="0">
+                    <span style="color:var(--text-muted);">-</span>
+                    <input type="number" id="filterAgeMax" class="form-input" style="padding:10px 14px;" placeholder="Max Age" min="0">
+                </div>
+                <select id="filterGender" class="form-input" style="width: 100%; padding: 10px 14px; background-color: white;">
+                    <option value="">Select Gender...</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <!-- Admissional flags -->
+            <div class="filter-group">
+                <label>Clinical Status Flags</label>
+                <div class="checkbox-group" style="display:flex; flex-direction:column; gap:10px;">
+                    <label class="checkbox-item" style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
+                        <input type="checkbox" id="filterIsHandwritten" style="cursor:pointer; width:17px; height:17px; accent-color: var(--primary);">
+                        <span>Handwritten Document</span>
+                    </label>
+                    <label class="checkbox-item" style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
+                        <input type="checkbox" id="filterIsEmergency" style="cursor:pointer; width:17px; height:17px; accent-color: var(--primary);">
+                        <span>Emergency Cases</span>
+                    </label>
+                    <label class="checkbox-item" style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
+                        <input type="checkbox" id="filterIsInpatient" style="cursor:pointer; width:17px; height:17px; accent-color: var(--primary);">
+                        <span>Inpatient Records</span>
+                    </label>
+                    <label class="checkbox-item" style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
+                        <input type="checkbox" id="filterIsOutpatient" style="cursor:pointer; width:17px; height:17px; accent-color: var(--primary);">
+                        <span>Outpatient Records</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Technical & Quality Thresholds -->
+            <div class="filter-group" style="border-top: 1px dashed rgba(0,0,0,0.1); padding-top:16px;">
+                <label>OCR & Quality Thresholds</label>
+                
+                <div style="margin-bottom: 16px;">
+                    <span style="font-size: 0.8rem; font-weight:500; color:var(--text-secondary); display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>OCR Confidence Min:</span> <span id="valConfidenceMin" style="font-weight:600; color:var(--primary);">0%</span>
+                    </span>
+                    <input type="range" id="filterConfidenceMin" min="0" max="100" value="0" style="width:100%; accent-color: var(--primary); cursor:pointer;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <span style="font-size: 0.8rem; font-weight:500; color:var(--text-secondary); display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>Image Quality Min:</span> <span id="valQualityMin" style="font-weight:600; color:var(--primary);">0%</span>
+                    </span>
+                    <input type="range" id="filterQualityMin" min="0" max="100" value="0" style="width:100%; accent-color: var(--primary); cursor:pointer;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <span style="font-size: 0.8rem; font-weight:500; color:var(--text-secondary); display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>Noise Level Max:</span> <span id="valNoiseMax" style="font-weight:600; color:var(--primary);">100%</span>
+                    </span>
+                    <input type="range" id="filterNoiseMax" min="0" max="100" value="100" style="width:100%; accent-color: var(--primary); cursor:pointer;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <span style="font-size: 0.8rem; font-weight:500; color:var(--text-secondary); display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>Contrast Score Min:</span> <span id="valContrastMin" style="font-weight:600; color:var(--primary);">0%</span>
+                    </span>
+                    <input type="range" id="filterContrastMin" min="0" max="100" value="0" style="width:100%; accent-color: var(--primary); cursor:pointer;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <span style="font-size: 0.8rem; font-weight:500; color:var(--text-secondary); display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>Brightness Min/Max:</span> <span id="valBrightnessMinMax" style="font-weight:600; color:var(--primary);">0 - 100</span>
+                    </span>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input type="number" id="filterBrightnessMin" class="form-input" style="flex:1; padding: 8px;" placeholder="Min" min="0" max="100">
+                        <span style="color:var(--text-muted); font-size:0.8rem;">to</span>
+                        <input type="number" id="filterBrightnessMax" class="form-input" style="flex:1; padding: 8px;" placeholder="Max" min="0" max="100">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <span style="font-size: 0.8rem; font-weight:500; color:var(--text-secondary); display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>Skew Angle Range:</span> <span id="valSkewRange" style="font-weight:600; color:var(--primary);">All</span>
+                    </span>
+                    <div style="display:flex; gap:8px;">
+                        <input type="number" id="filterSkewMin" class="form-input" style="flex:1; padding: 8px;" placeholder="Min °" step="0.5">
+                        <input type="number" id="filterSkewMax" class="form-input" style="flex:1; padding: 8px;" placeholder="Max °" step="0.5">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-drawer-footer" style="background: rgba(255,255,255,0.85); backdrop-filter:blur(8px);">
+            <button class="btn btn-outline" id="resetDrawerFilters" style="flex: 1; padding:12px;">Reset</button>
+            <button class="btn btn-primary" id="applyDrawerFilters" style="flex: 1.5; padding:12px;">Apply</button>
         </div>
     </div>
 

@@ -1,6 +1,6 @@
 import os
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -38,7 +38,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Generate simple signed token string for user authentication."""
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(UTC) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire.timestamp()})
     
     # Fast lightweight token encoding
@@ -55,7 +55,7 @@ def decode_token(token: str) -> Optional[dict]:
         encoded = token.replace("bearer_", "", 1)
         payload_str = base64.b64decode(encoded.encode()).decode()
         data = json.loads(payload_str)
-        if data.get("exp") and datetime.utcnow().timestamp() > data["exp"]:
+        if data.get("exp") and datetime.now(UTC).timestamp() > data["exp"]:
             return None
         return data
     except Exception:

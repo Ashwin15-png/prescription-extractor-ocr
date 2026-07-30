@@ -168,6 +168,22 @@ def seed_data_logic(db: Session) -> int:
             f"Prescribed Date: {prescription_date_str}"
         )
 
+        # Phase 6 Enterprise Filter Engine randomized stats
+        noise_val = random.randint(5, 25)
+        skew_val = round(random.uniform(-5.0, 5.0), 2)
+        rot_val = random.choice([0, 0, 0, 0, 90, 180, 270])
+        contrast_val = random.randint(70, 98)
+        brightness_val = random.randint(65, 96)
+        readability_val = random.randint(75, 99)
+        lang_val = random.choice(["English", "English", "English", "Hindi", "Tamil", "Spanish"])
+        barcode_val = random.choice(["None", f"BC-{random.randint(100000,999999)}", "None"])
+        handwritten_val = random.choice([True, False, False, False])
+        med_cat_val = random.choice(["Antibiotics", "Analgesics", "Antacids", "Antihistamine", "Cardiovascular", "Diabetic", "Vitamins"])
+        hosp_type_val = random.choice(["Private", "Government", "Trust", "Corporate"])
+        emergency_val = random.choice([True, False, False, False, False])
+        inpatient_val = random.choice([True, False, False, False])
+        outpatient_val = not inpatient_val
+
         p = Prescription(
             patient_name=patient_name,
             medicine=med_name,
@@ -203,6 +219,24 @@ def seed_data_logic(db: Session) -> int:
             country="India",
             state=state_name,
             city=city_name,
+            
+            # Phase 6 Enterprise Filter Engine Additions
+            noise_level=noise_val,
+            skew_angle=skew_val,
+            rotation=rot_val,
+            contrast_score=contrast_val,
+            brightness_score=brightness_val,
+            readability_score=readability_val,
+            language=lang_val,
+            barcode=barcode_val,
+            is_handwritten=handwritten_val,
+            medicine_category=med_cat_val,
+            doctor_specialty=doc_dept,
+            hospital_type=hosp_type_val,
+            is_emergency=emergency_val,
+            is_inpatient=inpatient_val,
+            is_outpatient=outpatient_val,
+            
             created_at=rec_date_dt,
             updated_at=rec_date_dt
         )

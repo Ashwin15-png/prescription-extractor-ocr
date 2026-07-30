@@ -94,6 +94,25 @@ def auto_migrate():
                 if "blur_detected" not in columns:
                     conn.execute(text("ALTER TABLE prescriptions ADD COLUMN blur_detected BOOLEAN DEFAULT FALSE"))
                     
+                # Phase 6 Enterprise Filter Engine Additions
+                for field, t in [("noise_level", "INTEGER DEFAULT 0"), 
+                                 ("skew_angle", "REAL DEFAULT 0.0"),
+                                 ("rotation", "INTEGER DEFAULT 0"), 
+                                 ("contrast_score", "INTEGER DEFAULT 100"),
+                                 ("brightness_score", "INTEGER DEFAULT 100"),
+                                 ("readability_score", "INTEGER DEFAULT 100"),
+                                 ("language", "VARCHAR DEFAULT 'English'"),
+                                 ("barcode", "VARCHAR DEFAULT NULL"),
+                                 ("is_handwritten", "BOOLEAN DEFAULT FALSE"),
+                                 ("medicine_category", "VARCHAR DEFAULT NULL"),
+                                 ("doctor_specialty", "VARCHAR DEFAULT NULL"),
+                                 ("hospital_type", "VARCHAR DEFAULT NULL"),
+                                 ("is_emergency", "BOOLEAN DEFAULT FALSE"),
+                                 ("is_inpatient", "BOOLEAN DEFAULT FALSE"),
+                                 ("is_outpatient", "BOOLEAN DEFAULT FALSE")]:
+                    if field not in columns:
+                        conn.execute(text(f"ALTER TABLE prescriptions ADD COLUMN {field} {t}"))
+                    
                 conn.commit()
                 logger.info("Database schema auto-migration check complete.")
     except Exception as e:

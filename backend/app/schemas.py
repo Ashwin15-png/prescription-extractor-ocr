@@ -26,6 +26,23 @@ class ExtractedFields(BaseModel):
     report_num: Optional[str] = ""
     lab_tests: Optional[str] = ""
     qr_code_data: Optional[str] = ""
+    
+    # Phase 6 Enterprise Filter Engine Additions
+    noise_level: Optional[int] = 0
+    skew_angle: Optional[float] = 0.0
+    rotation: Optional[int] = 0
+    contrast_score: Optional[int] = 100
+    brightness_score: Optional[int] = 100
+    readability_score: Optional[int] = 100
+    language: Optional[str] = "English"
+    barcode: Optional[str] = ""
+    is_handwritten: Optional[bool] = False
+    medicine_category: Optional[str] = ""
+    doctor_specialty: Optional[str] = ""
+    hospital_type: Optional[str] = ""
+    is_emergency: Optional[bool] = False
+    is_inpatient: Optional[bool] = False
+    is_outpatient: Optional[bool] = False
 
 class OCRUploadResponse(BaseModel):
     raw_text: str
@@ -72,6 +89,23 @@ class PrescriptionCreate(BaseModel):
     country: Optional[str] = "India"
     state: Optional[str] = ""
     city: Optional[str] = ""
+    
+    # Phase 6 Enterprise Filter Engine Additions
+    noise_level: Optional[int] = 0
+    skew_angle: Optional[float] = 0.0
+    rotation: Optional[int] = 0
+    contrast_score: Optional[int] = 100
+    brightness_score: Optional[int] = 100
+    readability_score: Optional[int] = 100
+    language: Optional[str] = "English"
+    barcode: Optional[str] = ""
+    is_handwritten: Optional[bool] = False
+    medicine_category: Optional[str] = ""
+    doctor_specialty: Optional[str] = ""
+    hospital_type: Optional[str] = ""
+    is_emergency: Optional[bool] = False
+    is_inpatient: Optional[bool] = False
+    is_outpatient: Optional[bool] = False
 
 class PrescriptionResponse(BaseModel):
     id: int
@@ -112,6 +146,23 @@ class PrescriptionResponse(BaseModel):
     state: Optional[str] = ""
     city: Optional[str] = ""
     created_at: Optional[Any] = None
+    
+    # Phase 6 Enterprise Filter Engine Additions
+    noise_level: Optional[int] = 0
+    skew_angle: Optional[float] = 0.0
+    rotation: Optional[int] = 0
+    contrast_score: Optional[int] = 100
+    brightness_score: Optional[int] = 100
+    readability_score: Optional[int] = 100
+    language: Optional[str] = "English"
+    barcode: Optional[str] = ""
+    is_handwritten: Optional[bool] = False
+    medicine_category: Optional[str] = ""
+    doctor_specialty: Optional[str] = ""
+    hospital_type: Optional[str] = ""
+    is_emergency: Optional[bool] = False
+    is_inpatient: Optional[bool] = False
+    is_outpatient: Optional[bool] = False
 
     model_config = ConfigDict(from_attributes=True)
 

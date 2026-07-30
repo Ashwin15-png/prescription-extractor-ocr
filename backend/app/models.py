@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Index, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, Index, Boolean, Float
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -52,6 +52,23 @@ class Prescription(Base):
     state = Column(String(100), nullable=True)
     city = Column(String(100), nullable=True)
     
+    # Phase 6 Enterprise Filter Engine Additions
+    noise_level = Column(Integer, nullable=True, default=0)
+    skew_angle = Column(Float, nullable=True, default=0.0)
+    rotation = Column(Integer, nullable=True, default=0)
+    contrast_score = Column(Integer, nullable=True, default=100)
+    brightness_score = Column(Integer, nullable=True, default=100)
+    readability_score = Column(Integer, nullable=True, default=100)
+    language = Column(String(50), nullable=True, default="English")
+    barcode = Column(String(100), nullable=True)
+    is_handwritten = Column(Boolean, nullable=True, default=False)
+    medicine_category = Column(String(100), nullable=True)
+    doctor_specialty = Column(String(150), nullable=True)
+    hospital_type = Column(String(100), nullable=True)
+    is_emergency = Column(Boolean, nullable=True, default=False)
+    is_inpatient = Column(Boolean, nullable=True, default=False)
+    is_outpatient = Column(Boolean, nullable=True, default=False)
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -99,6 +116,24 @@ class Prescription(Base):
             "country": self.country or "India",
             "state": self.state or "",
             "city": self.city or "",
+            
+            # Phase 6 Enterprise Filter Engine Additions
+            "noise_level": self.noise_level or 0,
+            "skew_angle": self.skew_angle or 0.0,
+            "rotation": self.rotation or 0,
+            "contrast_score": self.contrast_score or 100,
+            "brightness_score": self.brightness_score or 100,
+            "readability_score": self.readability_score or 100,
+            "language": self.language or "English",
+            "barcode": self.barcode or "",
+            "is_handwritten": self.is_handwritten or False,
+            "medicine_category": self.medicine_category or "",
+            "doctor_specialty": self.doctor_specialty or "",
+            "hospital_type": self.hospital_type or "",
+            "is_emergency": self.is_emergency or False,
+            "is_inpatient": self.is_inpatient or False,
+            "is_outpatient": self.is_outpatient or False,
+            
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
 

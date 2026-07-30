@@ -136,7 +136,16 @@ def analyze_image_quality(image_path: str) -> Dict[str, Any]:
         "confidence": 85,
         "image_quality": 100,
         "blur_detected": False,
-        "qr_code_data": ""
+        "qr_code_data": "",
+        "noise_level": 12,
+        "skew_angle": 0.0,
+        "rotation": 0,
+        "contrast_score": 85,
+        "brightness_score": 80,
+        "readability_score": 85,
+        "language": "English",
+        "barcode": "None",
+        "is_handwritten": False
     }
     
     try:
@@ -151,17 +160,48 @@ def analyze_image_quality(image_path: str) -> Dict[str, Any]:
         metrics["image_quality"] = min(100, int(variance / 10))
         metrics["blur_detected"] = variance < 100
         
+        # Noise level estimation
+        blur_diff = cv2.GaussianBlur(gray, (5, 5), 0)
+        noise = int(np.std(gray - blur_diff))
+        metrics["noise_level"] = min(100, noise * 4)
+        
+        # Contrast & Brightness estimation
+        metrics["brightness_score"] = min(100, int(np.mean(gray) / 255.0 * 100))
+        contrast = int(np.std(gray) * 2)
+        metrics["contrast_score"] = min(100, max(10, contrast))
+        
+        # Skew estimation
+        blur = cv2.GaussianBlur(gray, (9, 9), 0)
+        _, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (30, 5))
+        dilate = cv2.dilate(thresh, kernel, iterations=2)
+        contours, _ = cv2.findContours(dilate, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        if contours:
+            largest_contour = max(contours, key=cv2.contourArea)
+            rect = cv2.minAreaRect(largest_contour)
+            angle = rect[-1]
+            if angle < -45:
+                angle = -(90 + angle)
+            else:
+                angle = -angle
+            if abs(angle) > 0.1 and abs(angle) < 45.0:
+                metrics["skew_angle"] = round(float(angle), 2)
+        
         # QR Code Detection
         qr_decoder = cv2.QRCodeDetector()
         data, bbox, _ = qr_decoder.detectAndDecode(img)
         if data:
             metrics["qr_code_data"] = data
+            metrics["barcode"] = "QR Detected"
 
         processed = preprocess_image(img)
         tess_data = pytesseract.image_to_data(processed, output_type=pytesseract.Output.DICT)
         scores = [int(c) for c in tess_data.get("conf", []) if str(c).lstrip("-").isdigit() and int(c) >= 0]
         if scores:
-            metrics["confidence"] = int(sum(scores) / len(scores))
+            avg_conf = int(sum(scores) / len(scores))
+            metrics["confidence"] = avg_conf
+            metrics["readability_score"] = avg_conf
+            metrics["is_handwritten"] = avg_conf < 75
             
     except Exception as e:
         logger.warning(f"Image analysis error: {e}")
